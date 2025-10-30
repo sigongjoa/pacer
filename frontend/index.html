@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pacer 코치 피드백 시스템</title>
+    <style>
+        body { font-family: sans-serif; margin: 2em; background-color: #f4f4f9; color: #333; }
+        h1 { color: #0056b3; }
+        #logs-container { margin-top: 1em; }
+        .log-item { background-color: #fff; border: 1px solid #ddd; border-radius: 8px; padding: 1em; margin-bottom: 1em; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .log-item p { margin: 0.5em 0; }
+        .log-item .reason { font-style: italic; color: #555; }
+        .feedback-buttons button { margin-right: 0.5em; padding: 0.5em 1em; border: none; border-radius: 4px; cursor: pointer; }
+        .btn-good { background-color: #28a745; color: white; }
+        .btn-bad { background-color: #dc3545; color: white; }
+        #refresh-btn { padding: 0.8em 1.5em; background-color: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 1em; }
+    </style>
+</head>
+<body>
+
+    <h1>Pacer 코치 피드백 시스템</h1>
+    <button id="refresh-btn">최신 로그 불러오기</button>
+
+    <div id="logs-container">
+        <!-- 로그 데이터가 여기에 동적으로 삽입됩니다. -->
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

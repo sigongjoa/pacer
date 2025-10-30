@@ -1,0 +1,7 @@
+fastapi
+uvicorn
+pytest
+httpx
+SQLAlchemy
+aiosqlite
+pytest-asyncio

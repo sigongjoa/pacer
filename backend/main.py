@@ -1,0 +1,30 @@
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from ai_module import router as ai_router
+from llm_filter import router as llm_router
+
+from database import engine, Base
+
+app = FastAPI()
+
+# CORS 설정
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # 모든 출처 허용 (개발용)
+    allow_credentials=True,
+    allow_methods=["*"],  # 모든 HTTP 메소드 허용
+    allow_headers=["*"],  # 모든 HTTP 헤더 허용
+)
+
+# Create DB tables on startup
+@app.on_event("startup")
+async def startup():
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+
+app.include_router(ai_router)
+app.include_router(llm_router)
+
+@app.get("/")
+def read_root():
+    return {"message": "Welcome to the Pacer API"}

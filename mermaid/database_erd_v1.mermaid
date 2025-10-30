@@ -1,0 +1,55 @@
+erDiagram
+    COACHES {
+        INT coach_id PK
+        VARCHAR name
+        VARCHAR email UK
+    }
+
+    STUDENTS {
+        INT student_id PK
+        INT coach_id FK
+        VARCHAR name
+        JSON settings "e.g., anki_budget_per_day"
+    }
+
+    SUBMISSIONS {
+        INT submission_id PK
+        INT student_id FK
+        TIMESTAMP submitted_at
+        JSON raw_answers
+    }
+
+    COACH_MEMOS {
+        INT memo_id PK
+        INT coach_id FK
+        INT student_id FK
+        TEXT memo_text
+        TIMESTAMP created_at
+    }
+
+    LLM_LOGS {
+        INT log_id PK
+        INT submission_id FK
+        INT coach_id FK
+        VARCHAR decision
+        TEXT reason
+        VARCHAR coach_feedback
+        TIMESTAMP created_at
+    }
+
+    ANKI_CARDS {
+        INT card_id PK
+        INT student_id FK
+        INT llm_log_id FK
+        TEXT question
+        DATE next_review_date
+    }
+
+    COACHES ||--o{ STUDENTS : "manages"
+    STUDENTS ||--o{ SUBMISSIONS : "submits"
+    STUDENTS ||--o{ ANKI_CARDS : "owns"
+    STUDENTS ||--o{ COACH_MEMOS : "is about"
+    COACHES ||--o{ COACH_MEMOS : "writes"
+    SUBMISSIONS ||--o{ LLM_LOGS : "is judged by"
+    LLM_LOGS ||--o{ ANKI_CARDS : "results in"
+    COACHES ||--o{ LLM_LOGS : "provides feedback on"

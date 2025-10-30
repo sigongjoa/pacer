@@ -1,0 +1,60 @@
+graph TD
+    subgraph "사용자 (Actors)"
+        direction LR
+        coach[Coach]
+        student[Student]
+        parent[Parent]
+    end
+
+    subgraph "PACER System"
+        direction LR
+
+        subgraph "📱 Platform Service (Backend)"
+            direction TB
+            platform_class["<b>Platform Class</b><br/><br/>- Central Orchestrator<br/>- User Interface Logic<br/>- API Gateway Role"]
+            
+            subgraph "REST API Endpoints"
+                direction TB
+                api_spec["<b>API Specification</b><br/>(e.g., OpenAPI/Swagger)"]
+            end
+
+            platform_class -- "Defines" --> api_spec
+        end
+
+        subgraph "🧠 AI Service (ML/AI)"
+            direction TB
+            llm_filter_class["<b>LLMFilter Class</b><br/>(Gate-Keeper)"]
+            ai_module_class["<b>AIModule Class</b><br/>(Engine)"]
+        end
+
+        subgraph "🗃️ Pacer DB (PostgreSQL)"
+            direction TB
+            db_schema["<b>Database Schema (ERD)</b>"]
+            
+            subgraph "Tables"
+                direction TB
+                students_table["- STUDENTS"]
+                submissions_table["- SUBMISSIONS"]
+                anki_cards_table["- ANKI_CARDS"]
+                llm_logs_table["- LLM_LOGS"]
+            end
+            db_schema -- "Includes" --> students_table & submissions_table & anki_cards_table & llm_logs_table
+        end
+    end
+
+    %% --- Interactions ---
+    coach & student & parent -- "HTTPS<br/>(Web/App)" --> platform_class
+
+    platform_class -- "<b>POST /api/v1/filter/judge</b><br/>(REST API / JSON)" --> llm_filter_class
+    platform_class -- "<b>POST /api/v1/ai/analyze</b><br/>(REST API / JSON)" --> ai_module_class
+    
+    llm_filter_class -- "JDBC/TCP" --> db_schema
+    ai_module_class -- "JDBC/TCP" --> db_schema
+    platform_class -- "JDBC/TCP" --> db_schema
+
+    %% --- Styling ---
+    style platform_class fill:#e6f2ff,stroke:#0066cc,stroke-width:2px
+    style ai_module_class fill:#e6f9e6,stroke:#009900,stroke-width:2px
+    style llm_filter_class fill:#e6f9e6,stroke:#009900,stroke-width:2px
+    style db_schema fill:#fff2e6,stroke:#ff8c1a,stroke-width:2px
+    style api_spec fill:#f0f0f0,stroke:#666,stroke-width:2px

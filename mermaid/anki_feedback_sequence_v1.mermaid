@@ -1,0 +1,43 @@
+sequenceDiagram
+    participant Student as 학생
+    participant Coach as 코치 (본인)
+    participant Platform as 플랫폼
+    participant AIModule as <<Rule-Based>> AI 분석 모듈
+    participant LLMFilter as <<V1: Judge Only>> LLM 필터
+    participant DB as 데이터베이스
+
+    %% --- 1. 실시간 자동화 루프 (V1) ---
+    loop (실시간) 학생 학습 및 자동 필터링
+        Student->>Platform: 과제 제출 (오답 발생)
+        Platform->>AIModule: '학생A' 오답 분석 요청
+        AIModule-->>Platform: [1차 분석 리포트] (규칙 기반)
+        
+        Platform->>LLMFilter: [판단 요청] "error_context: {...}"
+        LLMFilter-->>Platform: [판단 결과] "decision: APPROVE"
+        
+        Platform->>DB: LLM의 [판단 결과] 로그 저장
+        alt decision is APPROVE
+            Platform->>AIModule: Anki 카드 생성 지시
+            AIModule->>DB: [Anki 카드] 저장
+        end
+    end
+
+    %% --- 2. 코치의 비동기 피드백 루프 (V1) ---
+    loop (주 1회) 코치의 LLM 피드백
+        Platform->>Coach: [주간 알림] "LLM 판단 N건에 대해 피드백해주세요."
+        
+        Coach->>Platform: (대시보드) LLM의 '자동 승인' 이력(Log) 검토
+        
+        opt LLM의 결정이 '나쁜' 경우
+            Coach->>Platform: (클릭) **"판단 나쁨 👎"** + (사유 선택)
+            Platform->>DB: **[피드백 로그 업데이트]** "log_id: ..., feedback: 'BAD'"
+            note right of DB: 자동 재학습(X), 수동 분석용 데이터 축적(O)
+            
+            Coach->>Platform: "해당 Anki 카드 즉시 삭제" 요청
+            Platform->>AIModule: Anki 카드 삭제 지시
+            AIModule->>DB: [Anki 카드] 삭제
+        else LLM의 결정이 '좋은' 경우
+            Coach->>Platform: (클릭) "판단 좋음 👍"
+            Platform->>DB: **[피드백 로그 업데이트]** "log_id: ..., feedback: 'GOOD'"
+        end
+    end

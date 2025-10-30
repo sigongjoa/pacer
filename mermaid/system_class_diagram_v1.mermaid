@@ -1,0 +1,46 @@
+classDiagram
+    direction LR
+
+    class Platform {
+        <<Central Orchestrator>>
+        +distribute_material(material)
+        +receive_submission(submission)
+        +request_rule_based_analysis(submission)
+        +request_llm_judgment(analysis_report)
+        +send_report_to_parent(report)
+    }
+
+    class AIModule {
+        <<**Rule-Based** Engine>>
+        +analyze_submission(submission) : AnalysisReport
+        +generate_ai_clinic(report) : AIClinic
+        +generate_weekly_report(student_data) : ReportDraft
+    }
+
+    class LLMFilter {
+        <<Gate-Keeper>>
+        +judge_anki_necessity(prompt) : LLMDecision
+        +log_coach_feedback(feedback_data)
+    }
+
+    class Coach {
+        +upload_material(content)
+        +write_offline_memo(student_id, text)
+        +approve_final_report(draft, comments)
+        +provide_feedback_on_llm(log, feedback)
+    }
+
+    class Database {
+        <<Data Store>>
+        +save_submission(data)
+        +save_coach_memo(data)
+        +save_llm_log(data)
+        +save_anki_card(data)
+    }
+
+    Platform --|> AIModule : invokes
+    Platform --|> LLMFilter : invokes
+    Platform --|> Database : accesses
+    Coach ..> Platform : interacts with
+    AIModule --|> Database : reads/writes
+    LLMFilter --|> Database : reads/writes

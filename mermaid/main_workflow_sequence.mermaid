@@ -1,0 +1,76 @@
+sequenceDiagram
+    participant Parent as 학부모
+    participant Student as 학생
+    participant Coach as 코치 (본인)
+    participant Platform as 플랫폼 (Web/App)
+    participant AIModule as AI 분석 모듈
+    participant DB as 데이터베이스
+
+    %% --- 0. 초기 등록 (생략) ---
+
+    %% --- 1. 주간 수업 사이클 시작 ---
+    loop 오프라인 수업 1회 사이클
+        
+        %% 1. Pre-Class (수업 전 예습)
+        Coach->>Platform: '1주차-예습' 자료 및 진단평가 배포
+        Platform->>Student: 예습 자료/테스트 알림
+        Student->>Platform: 예습 및 테스트 결과 제출
+        Platform->>DB: 학생 예습 답안 저장
+        
+        Platform->>AIModule: '학생A' 예습 결과 분석 요청
+        AIModule->>DB: 예습 답안 및 학생 과거 데이터 조회
+        AIModule-->>Platform: [분석 리포트 1] (예습 성취도, 예상 질문)
+        Platform->>DB: [리포트 1] 저장
+        Platform->>Coach: [알림] '학생A' 예습 분석 완료 / 수업 참고자료
+
+        %% 2. Main-Class (오프라인 수업) - 핵심
+        Coach->>Platform: (수업 직전) [리포트 1] 최종 확인
+        Coach->>Student: **[Offline]** 메인 수업 진행 (리포트 1 기반 취약점 공략)
+        Coach->>Student: **[Offline]** 문제 풀이 및 풀이 과정 관찰
+        Coach->>Platform: **(중요)** [Offline]에서 관찰한 정성적 데이터(태도, 풀이습관)를 대시보드에 **'메모'**
+        Platform->>DB: 코치의 정성적 코멘트 저장
+
+        %% 3. Post-Class (수업 후 과제/복습)
+        Coach->>Platform: '1주차-복습' 과제 배포
+        Platform->>Student: 복습 과제 알림
+        Student->>Platform: 과제 제출
+        Platform->>DB: 학생 과제 답안 저장
+        
+        Platform->>AIModule: '학생A' 과제 분석 요청
+        AIModule->>DB: 과제 답안 및 금일 수업 데이터 조회
+        AIModule-->>Platform: [분석 리포트 2] (오답 원인) + [AI 클리닉] 추천 문항 생성
+        Platform->>DB: [리포트 2] 및 [AI 클리닉] 문항 저장
+        
+        par 자동 피드백 (학생)
+            Platform->>Student: [자동] 채점 결과 + [AI 클리닉] 보강학습 제공
+            Student->>Platform: (선택) AI 클리닉 수행
+            Platform->>DB: 클리닉 수행 결과 저장
+        and **[신규] Anki 스케줄러 등록**
+            AIModule->>DB: **(중요)** 틀린 문제/핵심 개념을 "장기기억 복습 스케줄"에 자동 등록 (e.g., '근의 공식', 3일 뒤 복습)
+        and 분석 보고 (코치)
+            Platform->>Coach: [알림] '학생A' 과제 분석 및 AI 클리닉 배포 완료
+        end
+
+        %% 4. Reporting (사이클 마감)
+        Platform->>AIModule: '학생A' 주간 종합 리포트 생성 요청
+        AIModule->>DB: [리포트 1], [코치 코멘트], [리포트 2], **[신규] 장기기억 복습 현황** 등 모든 데이터 통합 조회
+        AIModule-->>Platform: [종합 리포트 초안] 생성 (데이터 기반)
+        Platform->>Coach: [To-Do] '학생A' 주간 리포트 검토/승인
+        
+        Coach->>Platform: 리포트 초안 확인, **[Offline] 관찰 기반 최종 코멘트 추가** 및 `승인`
+        Platform->>Parent: [자동발송] **코치 코멘트가 포함된** 최종 주간 리포트 발송
+    end
+    
+    %% --- 5. (신규) Anki 알고리즘 기반 '장기기억' 루프 (매일/주기적 실행) ---
+    loop (비동기) 장기기억 복습 사이클
+        Platform->>AIModule: '학생A'의 오늘자 복습 스케줄 요청
+        AIModule->>DB: "장기기억 복습 스케줄" DB 조회 (Anki 알고리즘 기반)
+        AIModule-->>Platform: '학생A'의 [오늘의 복습 카드 덱] 생성 (e.g., 3일 전 틀린 '근의 공식', 1주 전 맞춘 '판별식')
+        
+        Platform->>Student: [알림] "잊어버리기 전에 복습! 오늘의 10문제"
+        Student->>Platform: 복습 카드 덱 수행 (e.g., "이해함", "헷갈림", "모름")
+        Platform->>DB: 학생 응답 (Self-Report) 저장
+        
+        Platform->>AIModule: 학생 응답 기반, 복습 스케줄 재조정 요청
+        AIModule->>DB: **(중요)** Anki 알고리즘 실행 -> '근의 공식' (헷갈림) -> "내일 다시" / '판별식' (이해함) -> "2주 뒤에"
+    end
