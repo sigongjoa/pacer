@@ -2,6 +2,6 @@ fastapi
 uvicorn
 pytest
 httpx
-SQLAlchemy
+SQLAlchemy[asyncio]
 aiosqlite
 pytest-asyncio

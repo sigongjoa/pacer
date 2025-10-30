@@ -1,6 +1,6 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict # ConfigDict 추가
 from typing import List, Dict, Any, Optional
-from datetime import datetime
+from datetime import datetime, date
 
 # AI Module Schemas
 class ErrorContext(BaseModel):
@@ -13,7 +13,7 @@ class AnalysisReport(BaseModel):
     error_contexts: List[ErrorContext]
 
 class AnalyzeRequest(BaseModel):
-    submission_id: str
+    submission_id: int
     raw_answers: Dict[str, Any]
 
 # LLMFilter Schemas
@@ -46,5 +46,46 @@ class LLMLogResponse(BaseModel):
     coach_feedback: Optional[str]
     created_at: datetime
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True) # 추가
+
+# Anki Card Schemas
+class AnkiCardCreate(BaseModel):
+    student_id: str
+    llm_log_id: int
+    question: str
+    answer: str
+
+class AnkiCardResponse(BaseModel):
+    card_id: int
+    student_id: str
+    llm_log_id: int
+    question: str
+    answer: str
+    next_review_date: date
+    interval_days: int
+    ease_factor: int
+    repetitions: int
+    last_reviewed_at: Optional[datetime]
+
+    model_config = ConfigDict(from_attributes=True) # 추가
+
+# Student Schemas
+class StudentCreate(BaseModel):
+    student_id: str
+    name: str
+    settings: Dict[str, Any] = {}
+
+class StudentResponse(BaseModel):
+    student_id: str
+    name: str
+    settings: Dict[str, Any]
+
+    model_config = ConfigDict(from_attributes=True) # 추가
+
+# Pacer Brain Schemas
+class DailyReviewDeckResponse(BaseModel):
+    student_id: str
+    due_cards: List[AnkiCardResponse]
+    budget_applied: bool
+    total_due: int
+    cards_in_deck: int

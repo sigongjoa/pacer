@@ -80,6 +80,20 @@ Your JSON Response:"""
         reason=llm_response.get("reason", "LLM response format error.")
     )
 
+    # LLM이 APPROVE 결정을 내리면 Anki 카드를 생성합니다.
+    if new_log.decision == "APPROVE":
+        # 임시로 질문과 답변을 생성 (실제로는 더 정교한 로직 필요)
+        question = f"'''{request.error_context.concept_name}'''에 대해 설명하세요."
+        answer = f"'''{request.error_context.concept_name}'''은 ... 입니다. (LLM 응답 기반)"
+        
+        anki_card_data = schemas.AnkiCardCreate(
+            student_id=request.student_id,
+            llm_log_id=new_log.log_id,
+            question=question,
+            answer=answer
+        )
+        await crud.create_anki_card(db=db, card=anki_card_data)
+
     return schemas.JudgeResponse(
         log_id=str(new_log.log_id), 
         decision=new_log.decision,

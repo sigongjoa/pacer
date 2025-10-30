@@ -6,7 +6,7 @@ client = TestClient(app)
 def test_analyze_submission_with_basic_math_error():
     # 1. 테스트용 요청 데이터 준비
     request_data = {
-        "submission_id": "sub-test-001",
+        "submission_id": 1,
         "raw_answers": {
             "q1": {
                 "question": "1+1=?",
