@@ -1,5 +1,5 @@
 import pytest
-from httpx import AsyncClient
+
 from sqlalchemy.ext.asyncio import AsyncSession
 from datetime import date, timedelta
 from fastapi.testclient import TestClient # 추가
@@ -15,7 +15,7 @@ import models
 client = TestClient(app)
 
 @pytest.mark.asyncio
-async def test_get_daily_review_deck_with_budget(client_with_db: AsyncClient, async_session: AsyncSession):
+async def test_get_daily_review_deck_with_budget(client_with_db: TestClient, async_session: AsyncSession):
     student_id = "student-budget-001"
     # 1. 학생 생성 (예산 설정)
     student_create_data = schemas.StudentCreate(
@@ -43,17 +43,15 @@ async def test_get_daily_review_deck_with_budget(client_with_db: AsyncClient, as
     card2.next_review_date = today
     card3.next_review_date = today
     async_session.add_all([card1, card2, card3])
-    await async_session.commit()
 
     # 기한이 아닌 카드 1개
     card4_data = schemas.AnkiCardCreate(student_id=student_id, llm_log_id=4, question="Q4", answer="A4")
     card4 = await crud.create_anki_card(async_session, card=card4_data)
     card4.next_review_date = tomorrow # 내일 기한
     async_session.add(card4)
-    await async_session.commit()
 
     # 3. API 엔드포인트 호출
-    response = await client_with_db.get(f"/api/v1/student/{student_id}/daily_review_deck")
+    response = client_with_db.get(f"/api/v1/student/{student_id}/daily_review_deck")
 
     # 4. 결과 검증
     assert response.status_code == 200

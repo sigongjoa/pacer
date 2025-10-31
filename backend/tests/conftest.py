@@ -1,5 +1,10 @@
+import sys
+import os
 import asyncio
 import pytest
+
+# Add the project root to the Python path
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 import pytest_asyncio
 from typing import AsyncGenerator
 from fastapi.testclient import TestClient # httpx.AsyncClient 대신 TestClient 임포트
@@ -21,7 +26,7 @@ def event_loop():
     yield loop
     loop.close()
 
-@pytest.fixture(scope="session")
+@pytest_asyncio.fixture(scope="session")
 async def async_engine():
     """Session-scoped fixture for the async SQLAlchemy engine."""
     engine = create_async_engine(TEST_DATABASE_URL, echo=True)
@@ -32,7 +37,7 @@ async def async_engine():
         await conn.run_sync(Base.metadata.drop_all) # Drop tables after tests
     await engine.dispose()
 
-@pytest.fixture(scope="function")
+@pytest_asyncio.fixture(scope="function")
 async def async_session(async_engine) -> AsyncGenerator[AsyncSession, None]:
     """Function-scoped fixture for a transactional async session."""
     async_session_maker = async_sessionmaker(async_engine, class_=AsyncSession, expire_on_commit=False)

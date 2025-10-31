@@ -14,7 +14,7 @@ async def get_llm_logs(db: AsyncSession, skip: int = 0, limit: int = 10):
 async def create_llm_log(db: AsyncSession, submission_id: int, decision: str, reason: str) -> models.LLMLog:
     db_log = models.LLMLog(submission_id=submission_id, decision=decision, reason=reason)
     db.add(db_log)
-    await db.commit()
+    await db.flush()
     await db.refresh(db_log)
     return db_log
 
@@ -26,7 +26,7 @@ async def update_llm_log_feedback(db: AsyncSession, feedback: schemas.FeedbackRe
         db_log.coach_feedback = feedback.feedback
         db_log.reason_code = feedback.reason_code
         db_log.memo = feedback.memo
-        await db.commit()
+        await db.flush()
         await db.refresh(db_log)
     return db_log
 
@@ -43,7 +43,7 @@ async def create_anki_card(db: AsyncSession, card: schemas.AnkiCardCreate) -> mo
         repetitions=repetitions
     )
     db.add(db_card)
-    await db.commit()
+    await db.flush()
     await db.refresh(db_card)
     return db_card
 
@@ -59,7 +59,7 @@ async def update_anki_card_schedule(db: AsyncSession, card_id: int, quality: int
         db_card.ease_factor = int(ease_factor * 100)
         db_card.next_review_date = date.today() + timedelta(days=interval)
         db_card.last_reviewed_at = func.now()
-        await db.commit()
+        await db.flush()
         await db.refresh(db_card)
     return db_card
 
@@ -70,7 +70,7 @@ async def create_student(db: AsyncSession, student: schemas.StudentCreate) -> mo
         settings=student.settings
     )
     db.add(db_student)
-    await db.commit()
+    await db.flush()
     await db.refresh(db_student)
     return db_student
 

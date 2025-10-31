@@ -1,5 +1,5 @@
 import pytest
-from httpx import AsyncClient
+
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from fastapi.testclient import TestClient # 추가
@@ -15,7 +15,7 @@ import schemas
 client = TestClient(app)
 
 @pytest.mark.asyncio
-async def test_judge_and_feedback_e2e(client_with_db: AsyncClient, async_session: AsyncSession):
+async def test_judge_and_feedback_e2e(client_with_db: TestClient, async_session: AsyncSession):
     # 1. Judge API를 호출하여 로그를 생성합니다.
     judge_request_data = {
         "student_id": "user-e2e-001",
@@ -26,7 +26,7 @@ async def test_judge_and_feedback_e2e(client_with_db: AsyncClient, async_session
             "student_mistake_summary": "밤에 일어난다고 답변함."
         }
     }
-    response = await client_with_db.post("/api/v1/filter/judge", json=judge_request_data)
+    response = client_with_db.post("/api/v1/filter/judge", json=judge_request_data)
     assert response.status_code == 200
     judge_data = response.json()
     log_id = judge_data["log_id"]
@@ -52,7 +52,7 @@ async def test_judge_and_feedback_e2e(client_with_db: AsyncClient, async_session
         "feedback": "BAD",
         "reason_code": "WRONG_JUDGEMENT"
     }
-    response = await client_with_db.post("/api/v1/filter/feedback", json=feedback_data)
+    response = client_with_db.post("/api/v1/filter/feedback", json=feedback_data)
     assert response.status_code == 200
 
     # 4. DB의 로그가 실제로 업데이트되었는지 확인합니다.
