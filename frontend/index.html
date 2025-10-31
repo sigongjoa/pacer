@@ -115,6 +115,60 @@
         </div>
     </section>
 
+    <!-- ==================== Coach Memos ==================== -->
+    <section class="app-section">
+        <h2>코치 메모</h2>
+        <div id="coach-memos-app">
+            <h3>새 메모 작성</h3>
+            <form id="create-memo-form">
+                <div>
+                    <label for="memo-student-id">학생 선택:</label>
+                    <select id="memo-student-id" required>
+                        <!-- 학생 목록이 여기에 동적으로 로드됩니다. -->
+                    </select>
+                </div>
+                <div>
+                    <label for="memo-coach-id">코치 ID:</label>
+                    <input type="text" id="memo-coach-id" value="coach-001" required>
+                </div>
+                <div>
+                    <label for="memo-text">메모 내용:</label>
+                    <textarea id="memo-text" rows="3" required></textarea>
+                </div>
+                <button type="submit" class="btn-primary">메모 작성</button>
+            </form>
+            <hr>
+            <h3>메모 목록</h3>
+            <button id="refresh-memos-btn">메모 새로고침</button>
+            <div id="memos-list"></div>
+        </div>
+    </section>
+
+    <!-- ==================== Weekly Report ==================== -->
+    <section class="app-section">
+        <h2>주간 리포트</h2>
+        <div id="weekly-report-app">
+            <form id="generate-report-form">
+                <div>
+                    <label for="report-student-id">학생 선택:</label>
+                    <select id="report-student-id" required>
+                        <!-- 학생 목록이 여기에 동적으로 로드됩니다. -->
+                    </select>
+                </div>
+                <div>
+                    <label for="report-start-date">시작일:</label>
+                    <input type="date" id="report-start-date" required>
+                </div>
+                <div>
+                    <label for="report-end-date">종료일:</label>
+                    <input type="date" id="report-end-date" required>
+                </div>
+                <button type="submit" class="btn-primary">리포트 생성</button>
+            </form>
+            <div id="report-display" style="margin-top: 1em;"></div>
+        </div>
+    </section>
+
     <!-- ==================== Student App ==================== -->
     <section class="app-section">
         <h2>학생 일일 복습</h2>

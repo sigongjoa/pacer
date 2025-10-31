@@ -367,101 +367,1487 @@ document.addEventListener('DOMContentLoaded', () => {
 
         
 
-            // --- Assignment Submission Logic ---
-
-            const assignmentSubmissionApp = document.getElementById('assignment-submission-app');
-
-            if (assignmentSubmissionApp) {
-
-                const submitAssignmentForm = document.getElementById('submit-assignment-form');
-
-                const submissionStudentSelect = document.getElementById('submission-student-id');
-
-                const submissionAssignmentIdInput = document.getElementById('submission-assignment-id');
-
-                const submissionAnswerTextarea = document.getElementById('submission-answer');
-
-                const submissionStatusDiv = document.getElementById('submission-status');
+                // --- Assignment Submission Logic ---
 
         
 
-                const submitAssignment = async (event) => {
-
-                    event.preventDefault();
-
-                    const studentId = submissionStudentSelect.value;
-
-                    const assignmentId = submissionAssignmentIdInput.value;
-
-                    const answer = submissionAnswerTextarea.value;
+                const assignmentSubmissionApp = document.getElementById('assignment-submission-app');
 
         
 
-                    const submissionData = {
+                if (assignmentSubmissionApp) {
 
-                        student_id: studentId,
+        
 
-                        assignment_id: assignmentId,
+                    const submitAssignmentForm = document.getElementById('submit-assignment-form');
 
-                        answer: answer
+        
+
+                    const submissionStudentSelect = document.getElementById('submission-student-id');
+
+        
+
+                    const submissionAssignmentIdInput = document.getElementById('submission-assignment-id');
+
+        
+
+                    const submissionAnswerTextarea = document.getElementById('submission-answer');
+
+        
+
+                    const submissionStatusDiv = document.getElementById('submission-status');
+
+        
+
+            
+
+        
+
+                    const submitAssignment = async (event) => {
+
+        
+
+                        event.preventDefault();
+
+        
+
+                        const studentId = submissionStudentSelect.value;
+
+        
+
+                        const assignmentId = submissionAssignmentIdInput.value;
+
+        
+
+                        const answer = submissionAnswerTextarea.value;
+
+        
+
+            
+
+        
+
+                        const submissionData = {
+
+        
+
+                            student_id: studentId,
+
+        
+
+                            assignment_id: assignmentId,
+
+        
+
+                            answer: answer
+
+        
+
+                        };
+
+        
+
+            
+
+        
+
+                        submissionStatusDiv.textContent = '과제 제출 중...';
+
+        
+
+                        try {
+
+        
+
+                            const response = await fetch(`${API_BASE_URL}/api/v1/submission/`, {
+
+        
+
+                                method: 'POST',
+
+        
+
+                                headers: { 'Content-Type': 'application/json' },
+
+        
+
+                                body: JSON.stringify(submissionData),
+
+        
+
+                            });
+
+        
+
+                            if (!response.ok) {
+
+        
+
+                                const errorData = await response.json();
+
+        
+
+                                throw new Error(errorData.detail || `HTTP error! status: ${response.status}`);
+
+        
+
+                            }
+
+        
+
+                            const result = await response.json();
+
+        
+
+                            submissionStatusDiv.innerHTML = `<p style="color: green;">제출 완료: ${result.message}</p>`;
+
+        
+
+                            if (result.judge_decision) {
+
+        
+
+                                submissionStatusDiv.innerHTML += `<p>LLM 판단: ${result.judge_decision}</p>`;
+
+        
+
+                            }
+
+        
+
+                            submitAssignmentForm.reset();
+
+        
+
+                        } catch (error) {
+
+        
+
+                            submissionStatusDiv.innerHTML = `<p style="color: red;">과제 제출 실패: ${error.message}</p>`;
+
+        
+
+                        }
+
+        
 
                     };
 
         
 
-                    submissionStatusDiv.textContent = '과제 제출 중...';
+            
 
-                    try {
+        
 
-                        const response = await fetch(`${API_BASE_URL}/api/v1/submission/`, {
+                    submitAssignmentForm.addEventListener('submit', submitAssignment);
 
-                            method: 'POST',
+        
 
-                            headers: { 'Content-Type': 'application/json' },
+                }
 
-                            body: JSON.stringify(submissionData),
+        
 
-                        });
+            
 
-                        if (!response.ok) {
+        
 
-                            const errorData = await response.json();
+                    // --- Coach Memos Logic ---
 
-                            throw new Error(errorData.detail || `HTTP error! status: ${response.status}`);
+        
+
+            
+
+        
+
+                    const coachMemosApp = document.getElementById('coach-memos-app');
+
+        
+
+            
+
+        
+
+                    if (coachMemosApp) {
+
+        
+
+            
+
+        
+
+                        const createMemoForm = document.getElementById('create-memo-form');
+
+        
+
+            
+
+        
+
+                        const memoStudentSelect = document.getElementById('memo-student-id');
+
+        
+
+            
+
+        
+
+                        const memoCoachIdInput = document.getElementById('memo-coach-id');
+
+        
+
+            
+
+        
+
+                        const memoTextarea = document.getElementById('memo-text');
+
+        
+
+            
+
+        
+
+                        const memosListDiv = document.getElementById('memos-list');
+
+        
+
+            
+
+        
+
+                        const refreshMemosBtn = document.getElementById('refresh-memos-btn');
+
+        
+
+            
+
+        
+
+                
+
+        
+
+            
+
+        
+
+                        const createMemo = async (event) => {
+
+        
+
+            
+
+        
+
+                            event.preventDefault();
+
+        
+
+            
+
+        
+
+                            const studentId = memoStudentSelect.value;
+
+        
+
+            
+
+        
+
+                            const coachId = memoCoachIdInput.value;
+
+        
+
+            
+
+        
+
+                            const memoText = memoTextarea.value;
+
+        
+
+            
+
+        
+
+                
+
+        
+
+            
+
+        
+
+                            const memoData = {
+
+        
+
+            
+
+        
+
+                                coach_id: coachId,
+
+        
+
+            
+
+        
+
+                                student_id: studentId,
+
+        
+
+            
+
+        
+
+                                memo_text: memoText
+
+        
+
+            
+
+        
+
+                            };
+
+        
+
+            
+
+        
+
+                
+
+        
+
+            
+
+        
+
+                            try {
+
+        
+
+            
+
+        
+
+                                const response = await fetch(`${API_BASE_URL}/api/v1/coach/memo`, {
+
+        
+
+            
+
+        
+
+                                    method: 'POST',
+
+        
+
+            
+
+        
+
+                                    headers: { 'Content-Type': 'application/json' },
+
+        
+
+            
+
+        
+
+                                    body: JSON.stringify(memoData),
+
+        
+
+            
+
+        
+
+                                });
+
+        
+
+            
+
+        
+
+                                if (!response.ok) {
+
+        
+
+            
+
+        
+
+                                    const errorData = await response.json();
+
+        
+
+            
+
+        
+
+                                    throw new Error(errorData.detail || `HTTP error! status: ${response.status}`);
+
+        
+
+            
+
+        
+
+                                }
+
+        
+
+            
+
+        
+
+                                createMemoForm.reset();
+
+        
+
+            
+
+        
+
+                                fetchMemosForStudent(studentId); // Refresh memos for the selected student
+
+        
+
+            
+
+        
+
+                            } catch (error) {
+
+        
+
+            
+
+        
+
+                                alert(`메모 작성 실패: ${error.message}`);
+
+        
+
+            
+
+        
+
+                            }
+
+        
+
+            
+
+        
+
+                        };
+
+        
+
+            
+
+        
+
+                
+
+        
+
+            
+
+        
+
+                        const renderMemos = (memos) => {
+
+        
+
+            
+
+        
+
+                            memosListDiv.innerHTML = '';
+
+        
+
+            
+
+        
+
+                            if (!memos || memos.length === 0) {
+
+        
+
+            
+
+        
+
+                                memosListDiv.innerHTML = '<p>등록된 메모가 없습니다.</p>';
+
+        
+
+            
+
+        
+
+                                return;
+
+        
+
+            
+
+        
+
+                            }
+
+        
+
+            
+
+        
+
+                            memos.forEach(memo => {
+
+        
+
+            
+
+        
+
+                                const memoElement = document.createElement('div');
+
+        
+
+            
+
+        
+
+                                memoElement.className = 'log-item'; // Reusing log-item style
+
+        
+
+            
+
+        
+
+                                memoElement.innerHTML = `
+
+        
+
+            
+
+        
+
+                                    <p><strong>메모 ID:</strong> ${memo.memo_id}</p>
+
+        
+
+            
+
+        
+
+                                    <p><strong>코치 ID:</strong> ${memo.coach_id}</p>
+
+        
+
+            
+
+        
+
+                                    <p><strong>학생 ID:</strong> ${memo.student_id}</p>
+
+        
+
+            
+
+        
+
+                                    <p><strong>내용:</strong> ${memo.memo_text}</p>
+
+        
+
+            
+
+        
+
+                                    <p><strong>작성일:</strong> ${new Date(memo.created_at).toLocaleString()}</p>
+
+        
+
+            
+
+        
+
+                                `;
+
+        
+
+            
+
+        
+
+                                memosListDiv.appendChild(memoElement);
+
+        
+
+            
+
+        
+
+                            });
+
+        
+
+            
+
+        
+
+                        };
+
+        
+
+            
+
+        
+
+                
+
+        
+
+            
+
+        
+
+                        const fetchMemosForStudent = async (studentId) => {
+
+        
+
+            
+
+        
+
+                            if (!studentId) {
+
+        
+
+            
+
+        
+
+                                memosListDiv.innerHTML = '<p>학생을 선택해주세요.</p>';
+
+        
+
+            
+
+        
+
+                                return;
+
+        
+
+            
+
+        
+
+                            }
+
+        
+
+            
+
+        
+
+                            try {
+
+        
+
+            
+
+        
+
+                                const response = await fetch(`${API_BASE_URL}/api/v1/coach/student/${studentId}/memos`);
+
+        
+
+            
+
+        
+
+                                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+
+        
+
+            
+
+        
+
+                                const memos = await response.json();
+
+        
+
+            
+
+        
+
+                                renderMemos(memos);
+
+        
+
+            
+
+        
+
+                            } catch (error) {
+
+        
+
+            
+
+        
+
+                                memosListDiv.innerHTML = `<p style="color: red;">메모를 불러오는 데 실패했습니다: ${error.message}</p>`;
+
+        
+
+            
+
+        
+
+                            }
+
+        
+
+            
+
+        
+
+                        };
+
+        
+
+            
+
+        
+
+                
+
+        
+
+            
+
+        
+
+                        createMemoForm.addEventListener('submit', createMemo);
+
+        
+
+            
+
+        
+
+                        memoStudentSelect.addEventListener('change', (event) => fetchMemosForStudent(event.target.value));
+
+        
+
+            
+
+        
+
+                        refreshMemosBtn.addEventListener('click', () => fetchMemosForStudent(memoStudentSelect.value));
+
+        
+
+            
+
+        
+
+                
+
+        
+
+            
+
+        
+
+                        // Initial load of memos if a student is pre-selected
+
+        
+
+            
+
+        
+
+                        if (memoStudentSelect.value) {
+
+        
+
+            
+
+        
+
+                            fetchMemosForStudent(memoStudentSelect.value);
+
+        
+
+            
+
+        
 
                         }
 
-                        const result = await response.json();
+        
 
-                        submissionStatusDiv.innerHTML = `<p style="color: green;">제출 완료: ${result.message}</p>`;
+            
 
-                        if (result.judge_decision) {
-
-                            submissionStatusDiv.innerHTML += `<p>LLM 판단: ${result.judge_decision}</p>`;
-
-                        }
-
-                        submitAssignmentForm.reset();
-
-                    } catch (error) {
-
-                        submissionStatusDiv.innerHTML = `<p style="color: red;">과제 제출 실패: ${error.message}</p>`;
+        
 
                     }
 
-                };
+        
+
+            
 
         
 
-                submitAssignmentForm.addEventListener('submit', submitAssignment);
-
-            }
+                
 
         
 
+            
+
         
 
-            // --- Coach App Logic ---
+                    // --- Weekly Report Logic ---
+
+        
+
+            
+
+        
+
+                    const weeklyReportApp = document.getElementById('weekly-report-app');
+
+        
+
+            
+
+        
+
+                    if (weeklyReportApp) {
+
+        
+
+            
+
+        
+
+                        const generateReportForm = document.getElementById('generate-report-form');
+
+        
+
+            
+
+        
+
+                        const reportStudentSelect = document.getElementById('report-student-id');
+
+        
+
+            
+
+        
+
+                        const reportStartDateInput = document.getElementById('report-start-date');
+
+        
+
+            
+
+        
+
+                        const reportEndDateInput = document.getElementById('report-end-date');
+
+        
+
+            
+
+        
+
+                        const reportDisplayDiv = document.getElementById('report-display');
+
+        
+
+            
+
+        
+
+                
+
+        
+
+            
+
+        
+
+                        const generateReport = async (event) => {
+
+        
+
+            
+
+        
+
+                            event.preventDefault();
+
+        
+
+            
+
+        
+
+                            const studentId = reportStudentSelect.value;
+
+        
+
+            
+
+        
+
+                            const startDate = reportStartDateInput.value;
+
+        
+
+            
+
+        
+
+                            const endDate = reportEndDateInput.value;
+
+        
+
+            
+
+        
+
+                
+
+        
+
+            
+
+        
+
+                            if (!studentId || !startDate || !endDate) {
+
+        
+
+            
+
+        
+
+                                reportDisplayDiv.innerHTML = '<p style="color: red;">학생, 시작일, 종료일을 모두 선택해주세요.</p>';
+
+        
+
+            
+
+        
+
+                                return;
+
+        
+
+            
+
+        
+
+                            }
+
+        
+
+            
+
+        
+
+                
+
+        
+
+            
+
+        
+
+                            reportDisplayDiv.textContent = '리포트 생성 중...';
+
+        
+
+            
+
+        
+
+                            try {
+
+        
+
+            
+
+        
+
+                                const response = await fetch(`${API_BASE_URL}/api/v1/report/student/${studentId}/period?start_date=${startDate}&end_date=${endDate}`);
+
+        
+
+            
+
+        
+
+                                if (!response.ok) {
+
+        
+
+            
+
+        
+
+                                    const errorData = await response.json();
+
+        
+
+            
+
+        
+
+                                    throw new Error(errorData.detail || `HTTP error! status: ${response.status}`);
+
+        
+
+            
+
+        
+
+                                }
+
+        
+
+            
+
+        
+
+                                const report = await response.json();
+
+        
+
+            
+
+        
+
+                                renderReport(report);
+
+        
+
+            
+
+        
+
+                            } catch (error) {
+
+        
+
+            
+
+        
+
+                                reportDisplayDiv.innerHTML = `<p style="color: red;">리포트 생성 실패: ${error.message}</p>`;
+
+        
+
+            
+
+        
+
+                            }
+
+        
+
+            
+
+        
+
+                        };
+
+        
+
+            
+
+        
+
+                
+
+        
+
+            
+
+        
+
+                        const renderReport = (report) => {
+
+        
+
+            
+
+        
+
+                            reportDisplayDiv.innerHTML = `
+
+        
+
+            
+
+        
+
+                                <h3>${report.student_name} 학생 주간 리포트 (${report.report_period_start} ~ ${report.report_period_end})</h3>
+
+        
+
+            
+
+        
+
+                                <p><strong>총 제출 과제 수:</strong> ${report.total_submissions}</p>
+
+        
+
+            
+
+        
+
+                                <p><strong>LLM 판단 건수:</strong> ${report.llm_judgments_count}</p>
+
+        
+
+            
+
+        
+
+                                <p><strong>복습한 Anki 카드 수:</strong> ${report.anki_cards_reviewed_count}</p>
+
+        
+
+            
+
+        
+
+                                <p><strong>새로 생성된 Anki 카드 수:</strong> ${report.new_anki_cards_created_count}</p>
+
+        
+
+            
+
+        
+
+                                <h4>전체 요약:</h4>
+
+        
+
+            
+
+        
+
+                                <p>${report.overall_summary}</p>
+
+        
+
+            
+
+        
+
+                                
+
+        
+
+            
+
+        
+
+                                <h4>Anki 카드 요약:</h4>
+
+        
+
+            
+
+        
+
+                                <ul>
+
+        
+
+            
+
+        
+
+                                    ${report.anki_card_summaries.map(card => `
+
+        
+
+            
+
+        
+
+                                        <li>ID: ${card.card_id}, 질문: ${card.question}, 다음 복습일: ${card.next_review_date}, 반복: ${card.repetitions}회</li>
+
+        
+
+            
+
+        
+
+                                    `).join('')}
+
+        
+
+            
+
+        
+
+                                </ul>
+
+        
+
+            
+
+        
+
+                
+
+        
+
+            
+
+        
+
+                                <h4>LLM 판단 로그 요약:</h4>
+
+        
+
+            
+
+        
+
+                                <ul>
+
+        
+
+            
+
+        
+
+                                    ${report.llm_log_summaries.map(log => `
+
+        
+
+            
+
+        
+
+                                        <li>ID: ${log.log_id}, 제출물: ${log.submission_id}, 결정: ${log.decision}, 이유: ${log.reason}</li>
+
+        
+
+            
+
+        
+
+                                    `).join('')}
+
+        
+
+            
+
+        
+
+                                </ul>
+
+        
+
+            
+
+        
+
+                
+
+        
+
+            
+
+        
+
+                                <h4>코치 메모 요약:</h4>
+
+        
+
+            
+
+        
+
+                                <ul>
+
+        
+
+            
+
+        
+
+                                    ${report.coach_memo_summaries.map(memo => `
+
+        
+
+            
+
+        
+
+                                        <li>ID: ${memo.memo_id}, 코치: ${memo.coach_id}, 내용: ${memo.memo_text}</li>
+
+        
+
+            
+
+        
+
+                                    `).join('')}
+
+        
+
+            
+
+        
+
+                                </ul>
+
+        
+
+            
+
+        
+
+                            `;
+
+        
+
+            
+
+        
+
+                        };
+
+        
+
+            
+
+        
+
+                
+
+        
+
+            
+
+        
+
+                        generateReportForm.addEventListener('submit', generateReport);
+
+        
+
+            
+
+        
+
+                
+
+        
+
+            
+
+        
+
+                        // Set default dates for convenience
+
+        
+
+            
+
+        
+
+                        const today = new Date();
+
+        
+
+            
+
+        
+
+                        const sevenDaysAgo = new Date(today);
+
+        
+
+            
+
+        
+
+                        sevenDaysAgo.setDate(today.getDate() - 7);
+
+        
+
+            
+
+        
+
+                        reportStartDateInput.value = sevenDaysAgo.toISOString().split('T')[0];
+
+        
+
+            
+
+        
+
+                        reportEndDateInput.value = today.toISOString().split('T')[0];
+
+        
+
+            
+
+        
+
+                    }
+
+        
+
+            
+
+        
+
+                
+
+        
+
+            
+
+        
+
+                
+
+        
+
+            
+
+        
+
+                    // --- Coach App Logic ---
     const coachApp = document.getElementById('coach-app');
     if (coachApp) {
         const logsContainer = document.getElementById('logs-container');

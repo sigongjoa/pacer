@@ -28,6 +28,7 @@ class AnkiCard(Base):
     ease_factor = Column(Integer, default=250, nullable=False) # SM2 ease factor (250 = 2.5)
     repetitions = Column(Integer, default=0, nullable=False) # SM2 repetitions
     last_reviewed_at = Column(TIMESTAMP, nullable=True)
+    created_at = Column(TIMESTAMP, server_default=func.now())
 
 class Student(Base):
     __tablename__ = "students"
@@ -35,3 +36,12 @@ class Student(Base):
     student_id = Column(String, primary_key=True, index=True)
     name = Column(String, nullable=False)
     settings = Column(JSON, nullable=False, default={})
+
+class CoachMemo(Base):
+    __tablename__ = "coach_memos"
+
+    memo_id = Column(Integer, primary_key=True, index=True)
+    coach_id = Column(String, nullable=False)
+    student_id = Column(String, nullable=False)
+    memo_text = Column(Text, nullable=False)
+    created_at = Column(TIMESTAMP, server_default=func.now())

@@ -101,3 +101,60 @@ class DailyReviewDeckResponse(BaseModel):
     budget_applied: bool
     total_due: int
     cards_in_deck: int
+
+# Coach Memos Schemas
+class CoachMemoCreate(BaseModel):
+    coach_id: str
+    student_id: str
+    memo_text: str
+
+class CoachMemoResponse(BaseModel):
+    memo_id: int
+    coach_id: str
+    student_id: str
+    memo_text: str
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+# Weekly Report Schemas
+class ReportAnkiCardSummary(BaseModel):
+    card_id: int
+    question: str
+    last_reviewed_at: Optional[datetime]
+    next_review_date: date
+    repetitions: int
+    ease_factor: int
+
+    model_config = ConfigDict(from_attributes=True)
+
+class ReportLLMLogSummary(BaseModel):
+    log_id: int
+    submission_id: str
+    decision: str
+    reason: Optional[str]
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+class ReportCoachMemoSummary(BaseModel):
+    memo_id: int
+    coach_id: str
+    memo_text: str
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+class WeeklyReportResponse(BaseModel):
+    student_id: str
+    student_name: str
+    report_period_start: date
+    report_period_end: date
+    total_submissions: int
+    llm_judgments_count: int
+    anki_cards_reviewed_count: int
+    new_anki_cards_created_count: int
+    anki_card_summaries: List[ReportAnkiCardSummary]
+    llm_log_summaries: List[ReportLLMLogSummary]
+    coach_memo_summaries: List[ReportCoachMemoSummary]
+    overall_summary: str

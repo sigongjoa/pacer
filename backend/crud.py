@@ -99,3 +99,22 @@ async def get_due_anki_cards(db: AsyncSession, student_id: str, today: date) -> 
         .order_by(models.AnkiCard.next_review_date, models.AnkiCard.ease_factor.asc())
     )
     return result.scalars().all()
+
+async def create_coach_memo(db: AsyncSession, memo: schemas.CoachMemoCreate) -> models.CoachMemo:
+    db_memo = models.CoachMemo(
+        coach_id=memo.coach_id,
+        student_id=memo.student_id,
+        memo_text=memo.memo_text
+    )
+    db.add(db_memo)
+    await db.flush()
+    await db.refresh(db_memo)
+    return db_memo
+
+async def get_coach_memos(db: AsyncSession, student_id: str, coach_id: Optional[str] = None, skip: int = 0, limit: int = 100) -> List[models.CoachMemo]:
+    query = select(models.CoachMemo).where(models.CoachMemo.student_id == student_id)
+    if coach_id:
+        query = query.where(models.CoachMemo.coach_id == coach_id)
+    query = query.order_by(models.CoachMemo.created_at.desc()).offset(skip).limit(limit)
+    result = await db.execute(query)
+    return result.scalars().all()

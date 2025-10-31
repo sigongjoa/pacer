@@ -6,6 +6,8 @@ from llm_filter import router as llm_router
 from student_router import router as student_router
 from card_router import router as card_router
 from submission_router import router as submission_router
+from coach_router import router as coach_router
+from report_router import router as report_router
 
 from database import engine, Base
 import models # 모든 모델을 임포트하여 Base.metadata에 등록
@@ -33,6 +35,8 @@ app.include_router(llm_router)
 app.include_router(student_router)
 app.include_router(card_router)
 app.include_router(submission_router)
+app.include_router(coach_router)
+app.include_router(report_router)
 
 @app.get("/")
 def read_root():
