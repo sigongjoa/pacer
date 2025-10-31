@@ -6,7 +6,7 @@ class LLMLog(Base):
     __tablename__ = "llm_logs"
 
     log_id = Column(Integer, primary_key=True, index=True)
-    submission_id = Column(Integer, nullable=False)
+    submission_id = Column(String, nullable=False)
     coach_id = Column(String, nullable=True)
     decision = Column(String, nullable=False)
     reason = Column(Text, nullable=True)

@@ -137,11 +137,331 @@ document.addEventListener('DOMContentLoaded', () => {
         // Listener for the edit form submission
         editForm.addEventListener('submit', handleUpdateStudent);
 
-        fetchStudents(); // Initial load
-    }
+                const refreshStudentsBtn = document.getElementById('refresh-students-btn');
 
+                const editModal = document.getElementById('edit-student-modal');
 
-    // --- Coach App Logic ---
+                const editForm = document.getElementById('edit-student-form');
+
+                const closeModalBtn = editModal.querySelector('.close-btn');
+
+        
+
+                let studentsCache = []; // Cache to hold student data for editing
+
+        
+
+                const openEditModal = (student) => {
+
+                    document.getElementById('edit-student-id').value = student.student_id;
+
+                    document.getElementById('edit-student-id-display').textContent = student.student_id;
+
+                    document.getElementById('edit-student-name-display').textContent = student.name;
+
+                    const budget = student.settings?.anki_budget_per_day || 0;
+
+                    document.getElementById('edit-student-budget').value = budget;
+
+                    editModal.classList.remove('hidden');
+
+                };
+
+        
+
+                const closeEditModal = () => {
+
+                    editModal.classList.add('hidden');
+
+                };
+
+        
+
+                const handleUpdateStudent = async (event) => {
+
+                    event.preventDefault();
+
+                    const studentId = document.getElementById('edit-student-id').value;
+
+                    const budget = document.getElementById('edit-student-budget').value;
+
+                    const payload = {
+
+                        settings: { anki_budget_per_day: parseInt(budget, 10) }
+
+                    };
+
+        
+
+                    try {
+
+                        const response = await fetch(`${API_BASE_URL}/api/v1/student/${studentId}`, {
+
+                            method: 'PUT',
+
+                            headers: { 'Content-Type': 'application/json' },
+
+                            body: JSON.stringify(payload),
+
+                        });
+
+                        if (!response.ok) {
+
+                            const errorData = await response.json();
+
+                            throw new Error(errorData.detail || `HTTP error! status: ${response.status}`);
+
+                        }
+
+                        closeEditModal();
+
+                        fetchStudents(); // Refresh the list
+
+                    } catch (error) {
+
+                        alert(`학생 정보 수정에 실패했습니다: ${error.message}`);
+
+                    }
+
+                };
+
+        
+
+                const renderStudents = (students) => {
+
+                    studentsCache = students; // Update cache
+
+                    studentList.innerHTML = '';
+
+                    if (!students || students.length === 0) {
+
+                        studentList.innerHTML = '<tr><td colspan="4">등록된 학생이 없습니다.</td></tr>';
+
+                        return;
+
+                    }
+
+                    students.forEach(student => {
+
+                        const row = document.createElement('tr');
+
+                        const settings = student.settings || {};
+
+                        const budget = settings.anki_budget_per_day || 'N/A';
+
+                        row.innerHTML = `
+
+                            <td>${student.student_id}</td>
+
+                            <td>${student.name}</td>
+
+                            <td>${budget}</td>
+
+                            <td><button data-student-id="${student.student_id}">수정</button></td>
+
+                        `;
+
+                        studentList.appendChild(row);
+
+                    });
+
+        
+
+                    // Populate student dropdown for assignment submission
+
+                    const submissionStudentSelect = document.getElementById('submission-student-id');
+
+                    submissionStudentSelect.innerHTML = '';
+
+                    students.forEach(student => {
+
+                        const option = document.createElement('option');
+
+                        option.value = student.student_id;
+
+                        option.textContent = `${student.name} (${student.student_id})`;
+
+                        submissionStudentSelect.appendChild(option);
+
+                    });
+
+                };
+
+        
+
+                const fetchStudents = async () => {
+
+                    try {
+
+                        const response = await fetch(`${API_BASE_URL}/api/v1/student/`);
+
+                        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+
+                        const students = await response.json();
+
+                        renderStudents(students);
+
+                    } catch (error) {
+
+                        studentList.innerHTML = `<tr><td colspan="4" style="color: red;">학생 목록을 불러오는 데 실패했습니다: ${error.message}</td></tr>`;
+
+                    }
+
+                };
+
+        
+
+                createStudentForm.addEventListener('submit', createStudent);
+
+                refreshStudentsBtn.addEventListener('click', fetchStudents);
+
+        
+
+                // Event delegation for edit buttons
+
+                studentList.addEventListener('click', (event) => {
+
+                    if (event.target.tagName === 'BUTTON' && event.target.dataset.studentId) {
+
+                        const studentId = event.target.dataset.studentId;
+
+                        const studentToEdit = studentsCache.find(s => s.student_id === studentId);
+
+                        if (studentToEdit) {
+
+                            openEditModal(studentToEdit);
+
+                        }
+
+                    }
+
+                });
+
+        
+
+                // Listeners for closing the modal
+
+                closeModalBtn.addEventListener('click', closeEditModal);
+
+                window.addEventListener('click', (event) => {
+
+                    if (event.target == editModal) {
+
+                        closeEditModal();
+
+                    }
+
+                });
+
+        
+
+                // Listener for the edit form submission
+
+                editForm.addEventListener('submit', handleUpdateStudent);
+
+        
+
+                fetchStudents(); // Initial load
+
+            }
+
+        
+
+            // --- Assignment Submission Logic ---
+
+            const assignmentSubmissionApp = document.getElementById('assignment-submission-app');
+
+            if (assignmentSubmissionApp) {
+
+                const submitAssignmentForm = document.getElementById('submit-assignment-form');
+
+                const submissionStudentSelect = document.getElementById('submission-student-id');
+
+                const submissionAssignmentIdInput = document.getElementById('submission-assignment-id');
+
+                const submissionAnswerTextarea = document.getElementById('submission-answer');
+
+                const submissionStatusDiv = document.getElementById('submission-status');
+
+        
+
+                const submitAssignment = async (event) => {
+
+                    event.preventDefault();
+
+                    const studentId = submissionStudentSelect.value;
+
+                    const assignmentId = submissionAssignmentIdInput.value;
+
+                    const answer = submissionAnswerTextarea.value;
+
+        
+
+                    const submissionData = {
+
+                        student_id: studentId,
+
+                        assignment_id: assignmentId,
+
+                        answer: answer
+
+                    };
+
+        
+
+                    submissionStatusDiv.textContent = '과제 제출 중...';
+
+                    try {
+
+                        const response = await fetch(`${API_BASE_URL}/api/v1/submission/`, {
+
+                            method: 'POST',
+
+                            headers: { 'Content-Type': 'application/json' },
+
+                            body: JSON.stringify(submissionData),
+
+                        });
+
+                        if (!response.ok) {
+
+                            const errorData = await response.json();
+
+                            throw new Error(errorData.detail || `HTTP error! status: ${response.status}`);
+
+                        }
+
+                        const result = await response.json();
+
+                        submissionStatusDiv.innerHTML = `<p style="color: green;">제출 완료: ${result.message}</p>`;
+
+                        if (result.judge_decision) {
+
+                            submissionStatusDiv.innerHTML += `<p>LLM 판단: ${result.judge_decision}</p>`;
+
+                        }
+
+                        submitAssignmentForm.reset();
+
+                    } catch (error) {
+
+                        submissionStatusDiv.innerHTML = `<p style="color: red;">과제 제출 실패: ${error.message}</p>`;
+
+                    }
+
+                };
+
+        
+
+                submitAssignmentForm.addEventListener('submit', submitAssignment);
+
+            }
+
+        
+
+        
+
+            // --- Coach App Logic ---
     const coachApp = document.getElementById('coach-app');
     if (coachApp) {
         const logsContainer = document.getElementById('logs-container');

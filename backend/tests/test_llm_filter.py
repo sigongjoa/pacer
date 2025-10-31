@@ -19,7 +19,7 @@ async def test_judge_and_feedback_e2e(client_with_db: TestClient, async_session:
     # 1. Judge API를 호출하여 로그를 생성합니다.
     judge_request_data = {
         "student_id": "user-e2e-001",
-        "submission_id": 101,
+        "submission_id": "101",
         "error_context": {
             "question_type": "SCIENCE",
             "concept_name": "광합성",

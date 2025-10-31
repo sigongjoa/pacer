@@ -90,6 +90,31 @@
         </div>
     </section>
 
+    <!-- ==================== Assignment Submission ==================== -->
+    <section class="app-section">
+        <h2>과제 제출</h2>
+        <div id="assignment-submission-app">
+            <form id="submit-assignment-form">
+                <div>
+                    <label for="submission-student-id">학생 선택:</label>
+                    <select id="submission-student-id" required>
+                        <!-- 학생 목록이 여기에 동적으로 로드됩니다. -->
+                    </select>
+                </div>
+                <div>
+                    <label for="submission-assignment-id">과제 ID:</label>
+                    <input type="text" id="submission-assignment-id" value="history-01" required>
+                </div>
+                <div>
+                    <label for="submission-answer">학생 답변:</label>
+                    <textarea id="submission-answer" rows="5" required></textarea>
+                </div>
+                <button type="submit" class="btn-primary">과제 제출</button>
+            </form>
+            <div id="submission-status" style="margin-top: 1em;"></div>
+        </div>
+    </section>
+
     <!-- ==================== Student App ==================== -->
     <section class="app-section">
         <h2>학생 일일 복습</h2>

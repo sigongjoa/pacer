@@ -19,7 +19,7 @@ class AnalyzeRequest(BaseModel):
 # LLMFilter Schemas
 class JudgeRequest(BaseModel):
     student_id: str
-    submission_id: int
+    submission_id: str
     error_context: ErrorContext
 
 class JudgeResponse(BaseModel):
@@ -87,6 +87,12 @@ class StudentResponse(BaseModel):
 
 class StudentUpdate(BaseModel):
     settings: Dict[str, Any]
+
+# Submission Schemas
+class SubmissionRequest(BaseModel):
+    student_id: str
+    assignment_id: str # e.g., 'history-01'
+    answer: str
 
 # Pacer Brain Schemas
 class DailyReviewDeckResponse(BaseModel):
