@@ -12,9 +12,9 @@ def calculate_sm2_schedule(
     """
     if quality >= 3:
         if repetitions == 0:
-            interval = 1
+            interval = 6 # 첫 복습 성공 시 6일
         elif repetitions == 1:
-            interval = 6
+            interval = round(interval * ease_factor) # 두 번째부터 계수 적용
         else:
             interval = round(interval * ease_factor)
         repetitions += 1

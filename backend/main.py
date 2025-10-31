@@ -4,6 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from ai_module import router as ai_router
 from llm_filter import router as llm_router
 from student_router import router as student_router
+from card_router import router as card_router
 
 from database import engine, Base
 import models # 모든 모델을 임포트하여 Base.metadata에 등록
@@ -30,6 +31,7 @@ app.add_middleware(
 app.include_router(ai_router)
 app.include_router(llm_router)
 app.include_router(student_router)
+app.include_router(card_router)
 
 @app.get("/")
 def read_root():

@@ -3,28 +3,125 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pacer 코치 피드백 시스템</title>
+    <title>Pacer System</title>
     <style>
-        body { font-family: sans-serif; margin: 2em; background-color: #f4f4f9; color: #333; }
-        h1 { color: #0056b3; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; margin: 2em; background-color: #f4f4f9; color: #333; }
+        .app-section { background-color: #fff; border: 1px solid #ddd; border-radius: 8px; padding: 1em 2em 2em; margin-bottom: 2em; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        h1, h2 { color: #0056b3; }
+        button { border: none; border-radius: 5px; padding: 0.8em 1.5em; cursor: pointer; font-size: 1em; }
+        .btn-primary { background-color: #007bff; color: white; }
+        
+        /* Student App Styles */
+        #card-container { margin-top: 1.5em; padding: 1.5em; border: 1px solid #eee; border-radius: 8px; min-height: 100px; background-color: #fdfdfd; }
+        #card-question { font-size: 1.2em; margin-bottom: 1em; }
+        #card-answer { font-size: 1.1em; color: #28a745; border-top: 1px dashed #ccc; padding-top: 1em; margin-top: 1em; }
+        #feedback-controls button { margin-right: 0.5em; }
+        .hidden { display: none; }
+
+        /* Coach App Styles */
         #logs-container { margin-top: 1em; }
-        .log-item { background-color: #fff; border: 1px solid #ddd; border-radius: 8px; padding: 1em; margin-bottom: 1em; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .log-item { background-color: #fff; border: 1px solid #ddd; border-radius: 8px; padding: 1em; margin-bottom: 1em; }
         .log-item p { margin: 0.5em 0; }
         .log-item .reason { font-style: italic; color: #555; }
-        .feedback-buttons button { margin-right: 0.5em; padding: 0.5em 1em; border: none; border-radius: 4px; cursor: pointer; }
+        .feedback-buttons button { margin-right: 0.5em; padding: 0.5em 1em; }
         .btn-good { background-color: #28a745; color: white; }
         .btn-bad { background-color: #dc3545; color: white; }
-        #refresh-btn { padding: 0.8em 1.5em; background-color: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 1em; }
+
+        /* Modal Styles */
+        .modal { position: fixed; z-index: 1; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.4); }
+        .modal-content { background-color: #fefefe; margin: 15% auto; padding: 20px; border: 1px solid #888; width: 80%; max-width: 500px; border-radius: 8px; }
+        .close-btn { color: #aaa; float: right; font-size: 28px; font-weight: bold; cursor: pointer; }
+        .close-btn:hover, .close-btn:focus { color: black; text-decoration: none; }
+        #edit-student-form div { margin-bottom: 1em; }
+        #edit-student-form label { display: block; margin-bottom: 0.5em; }
     </style>
 </head>
 <body>
 
-    <h1>Pacer 코치 피드백 시스템</h1>
-    <button id="refresh-btn">최신 로그 불러오기</button>
+    <h1>Pacer System</h1>
 
-    <div id="logs-container">
-        <!-- 로그 데이터가 여기에 동적으로 삽입됩니다. -->
-    </div>
+    <!-- ==================== Student Management ==================== -->
+    <section class="app-section">
+        <h2>학생 관리</h2>
+        <div id="student-management-app">
+            <h3>새 학생 등록</h3>
+            <form id="create-student-form">
+                <input type="text" id="student-id" placeholder="학생 ID" required>
+                <input type="text" id="student-name" placeholder="이름" required>
+                <input type="number" id="student-budget" placeholder="일일 복습 예산" required>
+                <button type="submit" class="btn-primary">학생 등록</button>
+            </form>
+            <hr>
+            <h3>학생 목록</h3>
+            <button id="refresh-students-btn">목록 새로고침</button>
+            <table id="student-list">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>이름</th>
+                        <th>설정 (일일 예산)</th>
+                        <th>작업</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- 학생 데이터가 여기에 동적으로 삽입됩니다. -->
+                </tbody>
+            </table>
+
+            <!-- Edit Student Modal -->
+            <div id="edit-student-modal" class="modal hidden">
+                <div class="modal-content">
+                    <span class="close-btn">&times;</span>
+                    <h3>학생 정보 수정</h3>
+                    <form id="edit-student-form">
+                        <input type="hidden" id="edit-student-id">
+                        <div>
+                            <strong>학생 ID:</strong> <span id="edit-student-id-display"></span>
+                        </div>
+                        <div>
+                            <strong>이름:</strong> <span id="edit-student-name-display"></span>
+                        </div>
+                        <label for="edit-student-budget">일일 복습 예산:</label>
+                        <input type="number" id="edit-student-budget" required>
+                        <button type="submit" class="btn-primary">저장</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==================== Student App ==================== -->
+    <section class="app-section">
+        <h2>학생 일일 복습</h2>
+        <div id="student-app">
+            <button id="start-review-btn" class="btn-primary">오늘의 복습 시작하기</button>
+            <div id="card-container" class="hidden">
+                <div id="card-question"></div>
+                <button id="show-answer-btn" class="btn-primary">정답 보기</button>
+                <div id="card-answer" class="hidden"></div>
+                <div id="feedback-controls" class="hidden">
+                    <hr>
+                    <p>이 카드를 얼마나 잘 기억했나요?</p>
+                    <button data-quality="5">완벽해요 (Easy)</button>
+                    <button data-quality="4">잘했어요 (Good)</button>
+                    <button data-quality="3">알듯말듯 (Hard)</button>
+                    <button data-quality="0">새로워요 (Again)</button>
+                </div>
+            </div>
+            <div id="review-status"></div>
+        </div>
+    </section>
+
+    <!-- ==================== Coach App ==================== -->
+    <section class="app-section">
+        <h2>코치 피드백 시스템</h2>
+        <div id="coach-app">
+            <button id="refresh-btn" class="btn-primary">최신 로그 불러오기</button>
+            <div id="logs-container">
+                <!-- 로그 데이터가 여기에 동적으로 삽입됩니다. -->
+            </div>
+        </div>
+    </section>
 
     <script src="app.js"></script>
 </body>

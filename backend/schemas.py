@@ -69,6 +69,9 @@ class AnkiCardResponse(BaseModel):
 
     model_config = ConfigDict(from_attributes=True) # 추가
 
+class CardReviewRequest(BaseModel):
+    quality: int = Field(..., ge=0, le=5, description="Student\'s self-assessed quality of recall (0-5). 5: perfect recall, 0: complete blackout.")
+
 # Student Schemas
 class StudentCreate(BaseModel):
     student_id: str
@@ -81,6 +84,9 @@ class StudentResponse(BaseModel):
     settings: Dict[str, Any]
 
     model_config = ConfigDict(from_attributes=True) # 추가
+
+class StudentUpdate(BaseModel):
+    settings: Dict[str, Any]
 
 # Pacer Brain Schemas
 class DailyReviewDeckResponse(BaseModel):

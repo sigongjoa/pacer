@@ -1,4 +1,5 @@
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import func
 from sqlalchemy.future import select
 from datetime import date, timedelta
 from typing import List, Optional # Optional 추가
@@ -77,6 +78,18 @@ async def create_student(db: AsyncSession, student: schemas.StudentCreate) -> mo
 async def get_student(db: AsyncSession, student_id: str) -> Optional[models.Student]:
     result = await db.execute(select(models.Student).where(models.Student.student_id == student_id))
     return result.scalars().first()
+
+async def get_students(db: AsyncSession, skip: int = 0, limit: int = 100) -> List[models.Student]:
+    result = await db.execute(select(models.Student).offset(skip).limit(limit))
+    return result.scalars().all()
+
+async def update_student(db: AsyncSession, student_id: str, student: schemas.StudentUpdate) -> Optional[models.Student]:
+    db_student = await get_student(db, student_id=student_id)
+    if db_student:
+        db_student.settings = student.settings
+        await db.flush()
+        await db.refresh(db_student)
+    return db_student
 
 async def get_due_anki_cards(db: AsyncSession, student_id: str, today: date) -> List[models.AnkiCard]:
     result = await db.execute(
