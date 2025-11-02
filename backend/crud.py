@@ -118,3 +118,42 @@ async def get_coach_memos(db: AsyncSession, student_id: str, coach_id: Optional[
     query = query.order_by(models.CoachMemo.created_at.desc()).offset(skip).limit(limit)
     result = await db.execute(query)
     return result.scalars().all()
+
+async def create_weekly_report(db: AsyncSession, report_data: schemas.WeeklyReportResponse) -> models.WeeklyReport:
+    # Convert Pydantic models to dictionaries for JSON serialization
+    anki_summaries = [s.model_dump() for s in report_data.anki_card_summaries]
+    llm_summaries = [s.model_dump() for s in report_data.llm_log_summaries]
+    coach_summaries = [s.model_dump() for s in report_data.coach_memo_summaries]
+
+    db_report = models.WeeklyReport(
+        student_id=report_data.student_id,
+        report_period_start=report_data.report_period_start,
+        report_period_end=report_data.report_period_end,
+        total_submissions=report_data.total_submissions,
+        llm_judgments_count=report_data.llm_judgments_count,
+        anki_cards_reviewed_count=report_data.anki_cards_reviewed_count,
+        new_anki_cards_created_count=report_data.new_anki_cards_created_count,
+        anki_card_summaries=anki_summaries,
+        llm_log_summaries=llm_summaries,
+        coach_memo_summaries=coach_summaries,
+        overall_summary=report_data.overall_summary,
+        status='draft'
+    )
+    db.add(db_report)
+    await db.flush()
+    await db.refresh(db_report)
+    return db_report
+
+async def get_weekly_report(db: AsyncSession, report_id: int) -> Optional[models.WeeklyReport]:
+    result = await db.execute(select(models.WeeklyReport).where(models.WeeklyReport.report_id == report_id))
+    return result.scalars().first()
+
+async def finalize_weekly_report(db: AsyncSession, report_id: int, final_data: schemas.WeeklyReportFinalize) -> Optional[models.WeeklyReport]:
+    db_report = await get_weekly_report(db, report_id)
+    if db_report and db_report.status == 'draft':
+        db_report.coach_comment = final_data.coach_comment
+        db_report.status = 'finalized'
+        db_report.finalized_at = func.now()
+        await db.flush()
+        await db.refresh(db_report)
+    return db_report

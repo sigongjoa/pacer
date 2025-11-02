@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const API_BASE_URL = 'http://127.0.0.1:8000';
+    const API_BASE_URL = 'http://127.0.0.1:8001';
 
     // --- Student Management App Logic ---
     const studentManagementApp = document.getElementById('student-management-app');
@@ -54,11 +54,24 @@ document.addEventListener('DOMContentLoaded', () => {
         const renderStudents = (students) => {
             studentsCache = students; // Update cache
             studentList.innerHTML = '';
+
+            // Get all student dropdowns
+            const studentDropdowns = [
+                document.getElementById('submission-student-id'),
+                document.getElementById('memo-student-id'),
+                document.getElementById('report-student-id')
+            ];
+
+            // Clear existing options
+            studentDropdowns.forEach(select => { if(select) select.innerHTML = ''; });
+
             if (!students || students.length === 0) {
                 studentList.innerHTML = '<tr><td colspan="4">등록된 학생이 없습니다.</td></tr>';
                 return;
             }
+
             students.forEach(student => {
+                // Populate the main student list table
                 const row = document.createElement('tr');
                 const settings = student.settings || {};
                 const budget = settings.anki_budget_per_day || 'N/A';
@@ -69,6 +82,15 @@ document.addEventListener('DOMContentLoaded', () => {
                     <td><button data-student-id="${student.student_id}">수정</button></td>
                 `;
                 studentList.appendChild(row);
+
+                // Populate all dropdowns
+                studentDropdowns.forEach(select => {
+                    if (!select) return;
+                    const option = document.createElement('option');
+                    option.value = student.student_id;
+                    option.textContent = `${student.name} (${student.student_id})`;
+                    select.appendChild(option);
+                });
             });
         };
 
@@ -137,231 +159,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Listener for the edit form submission
         editForm.addEventListener('submit', handleUpdateStudent);
 
-                const refreshStudentsBtn = document.getElementById('refresh-students-btn');
-
-                const editModal = document.getElementById('edit-student-modal');
-
-                const editForm = document.getElementById('edit-student-form');
-
-                const closeModalBtn = editModal.querySelector('.close-btn');
-
-        
-
-                let studentsCache = []; // Cache to hold student data for editing
-
-        
-
-                const openEditModal = (student) => {
-
-                    document.getElementById('edit-student-id').value = student.student_id;
-
-                    document.getElementById('edit-student-id-display').textContent = student.student_id;
-
-                    document.getElementById('edit-student-name-display').textContent = student.name;
-
-                    const budget = student.settings?.anki_budget_per_day || 0;
-
-                    document.getElementById('edit-student-budget').value = budget;
-
-                    editModal.classList.remove('hidden');
-
-                };
-
-        
-
-                const closeEditModal = () => {
-
-                    editModal.classList.add('hidden');
-
-                };
-
-        
-
-                const handleUpdateStudent = async (event) => {
-
-                    event.preventDefault();
-
-                    const studentId = document.getElementById('edit-student-id').value;
-
-                    const budget = document.getElementById('edit-student-budget').value;
-
-                    const payload = {
-
-                        settings: { anki_budget_per_day: parseInt(budget, 10) }
-
-                    };
-
-        
-
-                    try {
-
-                        const response = await fetch(`${API_BASE_URL}/api/v1/student/${studentId}`, {
-
-                            method: 'PUT',
-
-                            headers: { 'Content-Type': 'application/json' },
-
-                            body: JSON.stringify(payload),
-
-                        });
-
-                        if (!response.ok) {
-
-                            const errorData = await response.json();
-
-                            throw new Error(errorData.detail || `HTTP error! status: ${response.status}`);
-
-                        }
-
-                        closeEditModal();
-
-                        fetchStudents(); // Refresh the list
-
-                    } catch (error) {
-
-                        alert(`학생 정보 수정에 실패했습니다: ${error.message}`);
-
-                    }
-
-                };
-
-        
-
-                const renderStudents = (students) => {
-
-                    studentsCache = students; // Update cache
-
-                    studentList.innerHTML = '';
-
-                    if (!students || students.length === 0) {
-
-                        studentList.innerHTML = '<tr><td colspan="4">등록된 학생이 없습니다.</td></tr>';
-
-                        return;
-
-                    }
-
-                    students.forEach(student => {
-
-                        const row = document.createElement('tr');
-
-                        const settings = student.settings || {};
-
-                        const budget = settings.anki_budget_per_day || 'N/A';
-
-                        row.innerHTML = `
-
-                            <td>${student.student_id}</td>
-
-                            <td>${student.name}</td>
-
-                            <td>${budget}</td>
-
-                            <td><button data-student-id="${student.student_id}">수정</button></td>
-
-                        `;
-
-                        studentList.appendChild(row);
-
-                    });
-
-        
-
-                    // Populate student dropdown for assignment submission
-
-                    const submissionStudentSelect = document.getElementById('submission-student-id');
-
-                    submissionStudentSelect.innerHTML = '';
-
-                    students.forEach(student => {
-
-                        const option = document.createElement('option');
-
-                        option.value = student.student_id;
-
-                        option.textContent = `${student.name} (${student.student_id})`;
-
-                        submissionStudentSelect.appendChild(option);
-
-                    });
-
-                };
-
-        
-
-                const fetchStudents = async () => {
-
-                    try {
-
-                        const response = await fetch(`${API_BASE_URL}/api/v1/student/`);
-
-                        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-
-                        const students = await response.json();
-
-                        renderStudents(students);
-
-                    } catch (error) {
-
-                        studentList.innerHTML = `<tr><td colspan="4" style="color: red;">학생 목록을 불러오는 데 실패했습니다: ${error.message}</td></tr>`;
-
-                    }
-
-                };
-
-        
-
-                createStudentForm.addEventListener('submit', createStudent);
-
-                refreshStudentsBtn.addEventListener('click', fetchStudents);
-
-        
-
-                // Event delegation for edit buttons
-
-                studentList.addEventListener('click', (event) => {
-
-                    if (event.target.tagName === 'BUTTON' && event.target.dataset.studentId) {
-
-                        const studentId = event.target.dataset.studentId;
-
-                        const studentToEdit = studentsCache.find(s => s.student_id === studentId);
-
-                        if (studentToEdit) {
-
-                            openEditModal(studentToEdit);
-
-                        }
-
-                    }
-
-                });
-
-        
-
-                // Listeners for closing the modal
-
-                closeModalBtn.addEventListener('click', closeEditModal);
-
-                window.addEventListener('click', (event) => {
-
-                    if (event.target == editModal) {
-
-                        closeEditModal();
-
-                    }
-
-                });
-
-        
-
-                // Listener for the edit form submission
-
-                editForm.addEventListener('submit', handleUpdateStudent);
-
-        
-
-                fetchStudents(); // Initial load
+        fetchStudents(); // Initial load
 
             }
 
@@ -1495,127 +1293,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         
 
-                        const renderReport = (report) => {
-
-        
-
-            
-
-        
-
-                            reportDisplayDiv.innerHTML = `
-
-        
-
-            
-
-        
-
-                                <h3>${report.student_name} 학생 주간 리포트 (${report.report_period_start} ~ ${report.report_period_end})</h3>
-
-        
-
-            
-
-        
-
-                                <p><strong>총 제출 과제 수:</strong> ${report.total_submissions}</p>
-
-        
-
-            
-
-        
-
-                                <p><strong>LLM 판단 건수:</strong> ${report.llm_judgments_count}</p>
-
-        
-
-            
-
-        
-
-                                <p><strong>복습한 Anki 카드 수:</strong> ${report.anki_cards_reviewed_count}</p>
-
-        
-
-            
-
-        
-
-                                <p><strong>새로 생성된 Anki 카드 수:</strong> ${report.new_anki_cards_created_count}</p>
-
-        
-
-            
-
-        
-
-                                <h4>전체 요약:</h4>
-
-        
-
-            
-
-        
-
-                                <p>${report.overall_summary}</p>
-
-        
-
-            
-
-        
-
-                                
-
-        
-
-            
-
-        
-
-                                <h4>Anki 카드 요약:</h4>
-
-        
-
-            
-
-        
-
-                                <ul>
-
-        
-
-            
-
-        
-
-                                    ${report.anki_card_summaries.map(card => `
-
-        
-
-            
-
-        
-
-                                        <li>ID: ${card.card_id}, 질문: ${card.question}, 다음 복습일: ${card.next_review_date}, 반복: ${card.repetitions}회</li>
-
-        
-
-            
-
-        
-
-                                    `).join('')}
-
-        
-
-            
-
-        
-
-                                </ul>
+                                                const renderReport = (report) => {
 
         
 
@@ -1631,47 +1309,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         
 
-                                <h4>LLM 판단 로그 요약:</h4>
-
-        
-
-            
-
-        
-
-                                <ul>
-
-        
-
-            
-
-        
-
-                                    ${report.llm_log_summaries.map(log => `
-
-        
-
-            
-
-        
-
-                                        <li>ID: ${log.log_id}, 제출물: ${log.submission_id}, 결정: ${log.decision}, 이유: ${log.reason}</li>
-
-        
-
-            
-
-        
-
-                                    `).join('')}
-
-        
-
-            
-
-        
-
-                                </ul>
+                                                    const coachReviewSection = document.getElementById('coach-review-section');
 
         
 
@@ -1687,63 +1325,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         
 
-                                <h4>코치 메모 요약:</h4>
-
-        
-
-            
-
-        
-
-                                <ul>
-
-        
-
-            
-
-        
-
-                                    ${report.coach_memo_summaries.map(memo => `
-
-        
-
-            
-
-        
-
-                                        <li>ID: ${memo.memo_id}, 코치: ${memo.coach_id}, 내용: ${memo.memo_text}</li>
-
-        
-
-            
-
-        
-
-                                    `).join('')}
-
-        
-
-            
-
-        
-
-                                </ul>
-
-        
-
-            
-
-        
-
-                            `;
-
-        
-
-            
-
-        
-
-                        };
+                                                    const finalizeBtn = document.getElementById('finalize-report-btn');
 
         
 
@@ -1759,7 +1341,1671 @@ document.addEventListener('DOMContentLoaded', () => {
 
         
 
-                        generateReportForm.addEventListener('submit', generateReport);
+                                                    const finalizeStatus = document.getElementById('finalize-status');
+
+        
+
+            
+
+        
+
+                
+
+        
+
+            
+
+        
+
+                                                    const coachCommentInput = document.getElementById('coach-comment-input');
+
+        
+
+            
+
+        
+
+                
+
+        
+
+            
+
+        
+
+                        
+
+        
+
+            
+
+        
+
+                
+
+        
+
+            
+
+        
+
+                                                    // Store report_id for later use
+
+        
+
+            
+
+        
+
+                
+
+        
+
+            
+
+        
+
+                                                    coachReviewSection.dataset.reportId = report.report_id;
+
+        
+
+            
+
+        
+
+                
+
+        
+
+            
+
+        
+
+                        
+
+        
+
+            
+
+        
+
+                
+
+        
+
+            
+
+        
+
+                                                    reportDisplayDiv.innerHTML = `
+
+        
+
+            
+
+        
+
+                
+
+        
+
+            
+
+        
+
+                                                        <h3>${report.student_name} 학생 주간 리포트 (${report.report_period_start} ~ ${report.report_period_end})</h3>
+
+        
+
+            
+
+        
+
+                
+
+        
+
+            
+
+        
+
+                                                        <p><strong>리포트 상태:</strong> <span style="font-weight: bold; color: ${report.status === 'draft' ? '#ff9800' : '#28a745'}">${report.status}</span></p>
+
+        
+
+            
+
+        
+
+                
+
+        
+
+            
+
+        
+
+                                                        <p><strong>총 제출 과제 수:</strong> ${report.total_submissions}</p>
+
+        
+
+            
+
+        
+
+                
+
+        
+
+            
+
+        
+
+                                                        <p><strong>LLM 판단 건수:</strong> ${report.llm_judgments_count}</p>
+
+        
+
+            
+
+        
+
+                
+
+        
+
+            
+
+        
+
+                                                        <p><strong>복습한 Anki 카드 수:</strong> ${report.anki_cards_reviewed_count}</p>
+
+        
+
+            
+
+        
+
+                
+
+        
+
+            
+
+        
+
+                                                        <p><strong>새로 생성된 Anki 카드 수:</strong> ${report.new_anki_cards_created_count}</p>
+
+        
+
+            
+
+        
+
+                
+
+        
+
+            
+
+        
+
+                                                        
+
+        
+
+            
+
+        
+
+                
+
+        
+
+            
+
+        
+
+                                                        <h4>AI 생성 전체 요약:</h4>
+
+        
+
+            
+
+        
+
+                
+
+        
+
+            
+
+        
+
+                                                        <p style="background-color: #f9f9f9; padding: 10px; border-radius: 5px;">${report.overall_summary.replace(/\n/g, '<br>')}</p>
+
+        
+
+            
+
+        
+
+                
+
+        
+
+            
+
+        
+
+                                                    `;
+
+        
+
+            
+
+        
+
+                
+
+        
+
+            
+
+        
+
+                        
+
+        
+
+            
+
+        
+
+                
+
+        
+
+            
+
+        
+
+                                                    // Display coach comment if it exists
+
+        
+
+            
+
+        
+
+                
+
+        
+
+            
+
+        
+
+                                                    if (report.coach_comment) {
+
+        
+
+            
+
+        
+
+                
+
+        
+
+            
+
+        
+
+                                                        reportDisplayDiv.innerHTML += `
+
+        
+
+            
+
+        
+
+                
+
+        
+
+            
+
+        
+
+                                                            <h4>코치 최종 코멘트:</h4>
+
+        
+
+            
+
+        
+
+                
+
+        
+
+            
+
+        
+
+                                                            <p style="background-color: #e7f3ff; padding: 10px; border-radius: 5px;">${report.coach_comment}</p>
+
+        
+
+            
+
+        
+
+                
+
+        
+
+            
+
+        
+
+                                                        `;
+
+        
+
+            
+
+        
+
+                
+
+        
+
+            
+
+        
+
+                                                    }
+
+        
+
+            
+
+        
+
+                
+
+        
+
+            
+
+        
+
+                        
+
+        
+
+            
+
+        
+
+                
+
+        
+
+            
+
+        
+
+                                                    // Show details in collapsible sections
+
+        
+
+            
+
+        
+
+                
+
+        
+
+            
+
+        
+
+                                                    reportDisplayDiv.innerHTML += `
+
+        
+
+            
+
+        
+
+                
+
+        
+
+            
+
+        
+
+                                                        <details>
+
+        
+
+            
+
+        
+
+                
+
+        
+
+            
+
+        
+
+                                                            <summary>Anki 카드 상세 내역</summary>
+
+        
+
+            
+
+        
+
+                
+
+        
+
+            
+
+        
+
+                                                            <ul>
+
+        
+
+            
+
+        
+
+                
+
+        
+
+            
+
+        
+
+                                                                ${report.anki_card_summaries.map(card => `
+
+        
+
+            
+
+        
+
+                
+
+        
+
+            
+
+        
+
+                                                                    <li>ID: ${card.card_id}, 질문: ${card.question}, 다음 복습일: ${card.next_review_date}, 반복: ${card.repetitions}회</li>
+
+        
+
+            
+
+        
+
+                
+
+        
+
+            
+
+        
+
+                                                                `).join('')}
+
+        
+
+            
+
+        
+
+                
+
+        
+
+            
+
+        
+
+                                                            </ul>
+
+        
+
+            
+
+        
+
+                
+
+        
+
+            
+
+        
+
+                                                        </details>
+
+        
+
+            
+
+        
+
+                
+
+        
+
+            
+
+        
+
+                                                        <details>
+
+        
+
+            
+
+        
+
+                
+
+        
+
+            
+
+        
+
+                                                            <summary>LLM 판단 로그 상세 내역</summary>
+
+        
+
+            
+
+        
+
+                
+
+        
+
+            
+
+        
+
+                                                            <ul>
+
+        
+
+            
+
+        
+
+                
+
+        
+
+            
+
+        
+
+                                                                ${report.llm_log_summaries.map(log => `
+
+        
+
+            
+
+        
+
+                
+
+        
+
+            
+
+        
+
+                                                                    <li>ID: ${log.log_id}, 제출물: ${log.submission_id}, 결정: ${log.decision}, 이유: ${log.reason}</li>
+
+        
+
+            
+
+        
+
+                
+
+        
+
+            
+
+        
+
+                                                                `).join('')}
+
+        
+
+            
+
+        
+
+                
+
+        
+
+            
+
+        
+
+                                                            </ul>
+
+        
+
+            
+
+        
+
+                
+
+        
+
+            
+
+        
+
+                                                        </details>
+
+        
+
+            
+
+        
+
+                
+
+        
+
+            
+
+        
+
+                                                        <details>
+
+        
+
+            
+
+        
+
+                
+
+        
+
+            
+
+        
+
+                                                            <summary>코치 메모 상세 내역</summary>
+
+        
+
+            
+
+        
+
+                
+
+        
+
+            
+
+        
+
+                                                            <ul>
+
+        
+
+            
+
+        
+
+                
+
+        
+
+            
+
+        
+
+                                                                ${report.coach_memo_summaries.map(memo => `
+
+        
+
+            
+
+        
+
+                
+
+        
+
+            
+
+        
+
+                                                                    <li>ID: ${memo.memo_id}, 코치: ${memo.coach_id}, 내용: ${memo.memo_text}</li>
+
+        
+
+            
+
+        
+
+                
+
+        
+
+            
+
+        
+
+                                                                `).join('')}
+
+        
+
+            
+
+        
+
+                
+
+        
+
+            
+
+        
+
+                                                            </ul>
+
+        
+
+            
+
+        
+
+                
+
+        
+
+            
+
+        
+
+                                                        </details>
+
+        
+
+            
+
+        
+
+                
+
+        
+
+            
+
+        
+
+                                                    `;
+
+        
+
+            
+
+        
+
+                
+
+        
+
+            
+
+        
+
+                        
+
+        
+
+            
+
+        
+
+                
+
+        
+
+            
+
+        
+
+                                                    // Handle UI based on report status
+
+        
+
+            
+
+        
+
+                
+
+        
+
+            
+
+        
+
+                                                    if (report.status === 'draft') {
+
+        
+
+            
+
+        
+
+                
+
+        
+
+            
+
+        
+
+                                                        coachReviewSection.classList.remove('hidden');
+
+        
+
+            
+
+        
+
+                
+
+        
+
+            
+
+        
+
+                                                        coachCommentInput.value = '';
+
+        
+
+            
+
+        
+
+                
+
+        
+
+            
+
+        
+
+                                                        finalizeBtn.disabled = false;
+
+        
+
+            
+
+        
+
+                
+
+        
+
+            
+
+        
+
+                                                        finalizeStatus.textContent = '';
+
+        
+
+            
+
+        
+
+                
+
+        
+
+            
+
+        
+
+                                                    } else {
+
+        
+
+            
+
+        
+
+                
+
+        
+
+            
+
+        
+
+                                                        coachReviewSection.classList.add('hidden');
+
+        
+
+            
+
+        
+
+                
+
+        
+
+            
+
+        
+
+                                                    }
+
+        
+
+            
+
+        
+
+                
+
+        
+
+            
+
+        
+
+                                                };
+
+        
+
+            
+
+        
+
+                
+
+        
+
+            
+
+        
+
+                        
+
+        
+
+            
+
+        
+
+                
+
+        
+
+            
+
+        
+
+                                                const finalizeReport = async () => {
+
+        
+
+            
+
+        
+
+                
+
+        
+
+            
+
+        
+
+                                                    const coachReviewSection = document.getElementById('coach-review-section');
+
+        
+
+            
+
+        
+
+                
+
+        
+
+            
+
+        
+
+                                                    const reportId = coachReviewSection.dataset.reportId;
+
+        
+
+            
+
+        
+
+                
+
+        
+
+            
+
+        
+
+                                                    const coachComment = document.getElementById('coach-comment-input').value;
+
+        
+
+            
+
+        
+
+                
+
+        
+
+            
+
+        
+
+                                                    const finalizeBtn = document.getElementById('finalize-report-btn');
+
+        
+
+            
+
+        
+
+                
+
+        
+
+            
+
+        
+
+                                                    const finalizeStatus = document.getElementById('finalize-status');
+
+        
+
+            
+
+        
+
+                
+
+        
+
+            
+
+        
+
+                        
+
+        
+
+            
+
+        
+
+                
+
+        
+
+            
+
+        
+
+                                                    if (!coachComment.trim()) {
+
+        
+
+            
+
+        
+
+                
+
+        
+
+            
+
+        
+
+                                                        alert('코치 코멘트를 입력해주세요.');
+
+        
+
+            
+
+        
+
+                
+
+        
+
+            
+
+        
+
+                                                        return;
+
+        
+
+            
+
+        
+
+                
+
+        
+
+            
+
+        
+
+                                                    }
+
+        
+
+            
+
+        
+
+                
+
+        
+
+            
+
+        
+
+                        
+
+        
+
+            
+
+        
+
+                
+
+        
+
+            
+
+        
+
+                                                    finalizeBtn.disabled = true;
+
+        
+
+            
+
+        
+
+                
+
+        
+
+            
+
+        
+
+                                                    finalizeStatus.textContent = '최종 승인 처리 중...';
+
+        
+
+            
+
+        
+
+                
+
+        
+
+            
+
+        
+
+                        
+
+        
+
+            
+
+        
+
+                
+
+        
+
+            
+
+        
+
+                                                                                try {
+
+        
+
+            
+
+        
+
+                
+
+        
+
+            
+
+        
+
+                        
+
+        
+
+            
+
+        
+
+                
+
+        
+
+            
+
+        
+
+                                                                                    const response = await fetch(`${API_BASE_URL}/api/v1/report/${reportId}/finalize`, {
+
+        
+
+            
+
+        
+
+                
+
+        
+
+            
+
+        
+
+                                                            method: 'PUT',
+
+        
+
+            
+
+        
+
+                
+
+        
+
+            
+
+        
+
+                                                            headers: { 'Content-Type': 'application/json' },
+
+        
+
+            
+
+        
+
+                
+
+        
+
+            
+
+        
+
+                                                            body: JSON.stringify({ coach_comment: coachComment }),
+
+        
+
+            
+
+        
+
+                
+
+        
+
+            
+
+        
+
+                                                        });
+
+        
+
+            
+
+        
+
+                
+
+        
+
+            
+
+        
+
+                        
+
+        
+
+            
+
+        
+
+                
+
+        
+
+            
+
+        
+
+                                                        if (!response.ok) {
+
+        
+
+            
+
+        
+
+                
+
+        
+
+            
+
+        
+
+                                                            const errorData = await response.json();
+
+        
+
+            
+
+        
+
+                
+
+        
+
+            
+
+        
+
+                                                            throw new Error(errorData.detail || `HTTP error! status: ${response.status}`);
+
+        
+
+            
+
+        
+
+                
+
+        
+
+            
+
+        
+
+                                                        }
+
+        
+
+            
+
+        
+
+                
+
+        
+
+            
+
+        
+
+                        
+
+        
+
+            
+
+        
+
+                
+
+        
+
+            
+
+        
+
+                                                        const updatedReport = await response.json();
+
+        
+
+            
+
+        
+
+                
+
+        
+
+            
+
+        
+
+                                                        finalizeStatus.innerHTML = '<p style="color: green;">리포트가 최종 승인되었습니다.</p>';
+
+        
+
+            
+
+        
+
+                
+
+        
+
+            
+
+        
+
+                                                        renderReport(updatedReport); // Re-render the report with the final data
+
+        
+
+            
+
+        
+
+                
+
+        
+
+            
+
+        
+
+                        
+
+        
+
+            
+
+        
+
+                
+
+        
+
+            
+
+        
+
+                                                    } catch (error) {
+
+        
+
+            
+
+        
+
+                
+
+        
+
+            
+
+        
+
+                                                        finalizeStatus.innerHTML = `<p style="color: red;">리포트 승인 실패: ${error.message}</p>`;
+
+        
+
+            
+
+        
+
+                
+
+        
+
+            
+
+        
+
+                                                        finalizeBtn.disabled = false;
+
+        
+
+            
+
+        
+
+                
+
+        
+
+            
+
+        
+
+                                                    }
+
+        
+
+            
+
+        
+
+                
+
+        
+
+            
+
+        
+
+                                                };
+
+        
+
+            
+
+        
+
+                
+
+        
+
+            
+
+        
+
+                        
+
+        
+
+            
+
+        
+
+                
+
+        
+
+            
+
+        
+
+                                                generateReportForm.addEventListener('submit', generateReport);
+
+        
+
+            
+
+        
+
+                
+
+        
+
+            
+
+        
+
+                                                document.getElementById('finalize-report-btn').addEventListener('click', finalizeReport);
 
         
 
@@ -2016,6 +3262,35 @@ document.addEventListener('DOMContentLoaded', () => {
             if (event.target.tagName === 'BUTTON') {
                 submitReview(parseInt(event.target.dataset.quality, 10));
             }
+        });
+    }
+
+    // --- Navigation Logic ---
+    const sidebar = document.getElementById('sidebar');
+    if (sidebar) {
+        const navLinks = sidebar.querySelectorAll('.nav-link');
+        const pages = document.querySelectorAll('#main-content .app-section');
+
+        sidebar.addEventListener('click', (e) => {
+            if (!e.target.classList.contains('nav-link')) return;
+            e.preventDefault();
+
+            const targetId = e.target.dataset.target;
+            
+            // Update active link
+            navLinks.forEach(link => {
+                link.classList.remove('active');
+            });
+            e.target.classList.add('active');
+
+            // Show/hide pages
+            pages.forEach(page => {
+                if (page.id === targetId) {
+                    page.classList.remove('hidden');
+                } else {
+                    page.classList.add('hidden');
+                }
+            });
         });
     }
 });

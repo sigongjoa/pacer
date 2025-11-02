@@ -23,3 +23,18 @@ async def get_weekly_report(
         return report
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
+
+@router.put("/report/{report_id}/finalize", response_model=schemas.WeeklyReportResponse)
+async def finalize_report(
+    report_id: int,
+    final_data: schemas.WeeklyReportFinalize,
+    db: AsyncSession = Depends(get_db)
+):
+    report = await crud.get_weekly_report(db, report_id=report_id)
+    if not report:
+        raise HTTPException(status_code=404, detail="Report not found")
+    if report.status != 'draft':
+        raise HTTPException(status_code=400, detail=f"Report is already in '{report.status}' status and cannot be finalized.")
+
+    updated_report = await crud.finalize_weekly_report(db, report_id=report_id, final_data=final_data)
+    return updated_report

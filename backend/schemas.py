@@ -146,6 +146,7 @@ class ReportCoachMemoSummary(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 class WeeklyReportResponse(BaseModel):
+    report_id: int
     student_id: str
     student_name: str
     report_period_start: date
@@ -158,3 +159,12 @@ class WeeklyReportResponse(BaseModel):
     llm_log_summaries: List[ReportLLMLogSummary]
     coach_memo_summaries: List[ReportCoachMemoSummary]
     overall_summary: str
+    coach_comment: Optional[str] = None
+    status: str
+    created_at: datetime
+    finalized_at: Optional[datetime] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+class WeeklyReportFinalize(BaseModel):
+    coach_comment: str

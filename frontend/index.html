@@ -5,9 +5,55 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pacer System</title>
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; margin: 2em; background-color: #f4f4f9; color: #333; }
-        .app-section { background-color: #fff; border: 1px solid #ddd; border-radius: 8px; padding: 1em 2em 2em; margin-bottom: 2em; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        h1, h2 { color: #0056b3; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
+            margin: 0; 
+            background-color: #f4f4f9; 
+            color: #333; 
+            display: flex;
+            height: 100vh;
+        }
+        #sidebar {
+            width: 220px;
+            background-color: #0056b3;
+            color: white;
+            padding: 1em;
+            height: 100%;
+        }
+        #sidebar h1 {
+            color: white;
+            font-size: 1.5em;
+            margin-top: 0;
+        }
+        #sidebar nav ul {
+            list-style: none;
+            padding: 0;
+        }
+        #sidebar nav li a {
+            display: block;
+            color: white;
+            text-decoration: none;
+            padding: 0.8em 1em;
+            border-radius: 5px;
+            margin-bottom: 0.5em;
+        }
+        #sidebar nav li a:hover, #sidebar nav li a.active {
+            background-color: #007bff;
+        }
+        #main-content {
+            flex-grow: 1;
+            padding: 2em;
+            overflow-y: auto;
+        }
+        .app-section { 
+            background-color: #fff; 
+            border: 1px solid #ddd; 
+            border-radius: 8px; 
+            padding: 1em 2em 2em; 
+            margin-bottom: 2em; 
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1); 
+        }
+        h2 { color: #0056b3; }
         button { border: none; border-radius: 5px; padding: 0.8em 1.5em; cursor: pointer; font-size: 1em; }
         .btn-primary { background-color: #007bff; color: white; }
         
@@ -38,169 +84,192 @@
 </head>
 <body>
 
-    <h1>Pacer System</h1>
+    <div id="sidebar">
+        <h1>Pacer System</h1>
+        <nav>
+            <ul>
+                <li><a href="#" class="nav-link active" data-target="student-management-app">학생 관리</a></li>
+                <li><a href="#" class="nav-link" data-target="assignment-submission-app">과제 제출</a></li>
+                <li><a href="#" class="nav-link" data-target="coach-memos-app">코치 메모</a></li>
+                <li><a href="#" class="nav-link" data-target="weekly-report-app">주간 리포트</a></li>
+                <li><a href="#" class="nav-link" data-target="student-app">학생 일일 복습</a></li>
+                <li><a href="#" class="nav-link" data-target="coach-app">코치 피드백</a></li>
+            </ul>
+        </nav>
+    </div>
 
-    <!-- ==================== Student Management ==================== -->
-    <section class="app-section">
-        <h2>학생 관리</h2>
-        <div id="student-management-app">
-            <h3>새 학생 등록</h3>
-            <form id="create-student-form">
-                <input type="text" id="student-id" placeholder="학생 ID" required>
-                <input type="text" id="student-name" placeholder="이름" required>
-                <input type="number" id="student-budget" placeholder="일일 복습 예산" required>
-                <button type="submit" class="btn-primary">학생 등록</button>
-            </form>
-            <hr>
-            <h3>학생 목록</h3>
-            <button id="refresh-students-btn">목록 새로고침</button>
-            <table id="student-list">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>이름</th>
-                        <th>설정 (일일 예산)</th>
-                        <th>작업</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <!-- 학생 데이터가 여기에 동적으로 삽입됩니다. -->
-                </tbody>
-            </table>
+    <div id="main-content">
+        <!-- ==================== Student Management ==================== -->
+        <section id="student-management-app" class="app-section">
+            <h2>학생 관리</h2>
+            <div>
+                <h3>새 학생 등록</h3>
+                <form id="create-student-form">
+                    <input type="text" id="student-id" placeholder="학생 ID" required>
+                    <input type="text" id="student-name" placeholder="이름" required>
+                    <input type="number" id="student-budget" placeholder="일일 복습 예산" required>
+                    <button type="submit" class="btn-primary">학생 등록</button>
+                </form>
+                <hr>
+                <h3>학생 목록</h3>
+                <button id="refresh-students-btn">목록 새로고침</button>
+                <table id="student-list">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>이름</th>
+                            <th>설정 (일일 예산)</th>
+                            <th>작업</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- 학생 데이터가 여기에 동적으로 삽입됩니다. -->
+                    </tbody>
+                </table>
 
-            <!-- Edit Student Modal -->
-            <div id="edit-student-modal" class="modal hidden">
-                <div class="modal-content">
-                    <span class="close-btn">&times;</span>
-                    <h3>학생 정보 수정</h3>
-                    <form id="edit-student-form">
-                        <input type="hidden" id="edit-student-id">
-                        <div>
-                            <strong>학생 ID:</strong> <span id="edit-student-id-display"></span>
-                        </div>
-                        <div>
-                            <strong>이름:</strong> <span id="edit-student-name-display"></span>
-                        </div>
-                        <label for="edit-student-budget">일일 복습 예산:</label>
-                        <input type="number" id="edit-student-budget" required>
-                        <button type="submit" class="btn-primary">저장</button>
-                    </form>
+                <!-- Edit Student Modal -->
+                <div id="edit-student-modal" class="modal hidden">
+                    <div class="modal-content">
+                        <span class="close-btn">&times;</span>
+                        <h3>학생 정보 수정</h3>
+                        <form id="edit-student-form">
+                            <input type="hidden" id="edit-student-id">
+                            <div>
+                                <strong>학생 ID:</strong> <span id="edit-student-id-display"></span>
+                            </div>
+                            <div>
+                                <strong>이름:</strong> <span id="edit-student-name-display"></span>
+                            </div>
+                            <label for="edit-student-budget">일일 복습 예산:</label>
+                            <input type="number" id="edit-student-budget" required>
+                            <button type="submit" class="btn-primary">저장</button>
+                        </form>
+                    </div>
                 </div>
             </div>
-        </div>
-    </section>
+        </section>
 
-    <!-- ==================== Assignment Submission ==================== -->
-    <section class="app-section">
-        <h2>과제 제출</h2>
-        <div id="assignment-submission-app">
-            <form id="submit-assignment-form">
-                <div>
-                    <label for="submission-student-id">학생 선택:</label>
-                    <select id="submission-student-id" required>
-                        <!-- 학생 목록이 여기에 동적으로 로드됩니다. -->
-                    </select>
-                </div>
-                <div>
-                    <label for="submission-assignment-id">과제 ID:</label>
-                    <input type="text" id="submission-assignment-id" value="history-01" required>
-                </div>
-                <div>
-                    <label for="submission-answer">학생 답변:</label>
-                    <textarea id="submission-answer" rows="5" required></textarea>
-                </div>
-                <button type="submit" class="btn-primary">과제 제출</button>
-            </form>
-            <div id="submission-status" style="margin-top: 1em;"></div>
-        </div>
-    </section>
+        <!-- ==================== Assignment Submission ==================== -->
+        <section id="assignment-submission-app" class="app-section hidden">
+            <h2>과제 제출</h2>
+            <div>
+                <form id="submit-assignment-form">
+                    <div>
+                        <label for="submission-student-id">학생 선택:</label>
+                        <select id="submission-student-id" required>
+                            <!-- 학생 목록이 여기에 동적으로 로드됩니다. -->
+                        </select>
+                    </div>
+                    <div>
+                        <label for="submission-assignment-id">과제 ID:</label>
+                        <input type="text" id="submission-assignment-id" value="history-01" required>
+                    </div>
+                    <div>
+                        <label for="submission-answer">학생 답변:</label>
+                        <textarea id="submission-answer" rows="5" required></textarea>
+                    </div>
+                    <button type="submit" class="btn-primary">과제 제출</button>
+                </form>
+                <div id="submission-status" style="margin-top: 1em;"></div>
+            </div>
+        </section>
 
-    <!-- ==================== Coach Memos ==================== -->
-    <section class="app-section">
-        <h2>코치 메모</h2>
-        <div id="coach-memos-app">
-            <h3>새 메모 작성</h3>
-            <form id="create-memo-form">
-                <div>
-                    <label for="memo-student-id">학생 선택:</label>
-                    <select id="memo-student-id" required>
-                        <!-- 학생 목록이 여기에 동적으로 로드됩니다. -->
-                    </select>
-                </div>
-                <div>
-                    <label for="memo-coach-id">코치 ID:</label>
-                    <input type="text" id="memo-coach-id" value="coach-001" required>
-                </div>
-                <div>
-                    <label for="memo-text">메모 내용:</label>
-                    <textarea id="memo-text" rows="3" required></textarea>
-                </div>
-                <button type="submit" class="btn-primary">메모 작성</button>
-            </form>
-            <hr>
-            <h3>메모 목록</h3>
-            <button id="refresh-memos-btn">메모 새로고침</button>
-            <div id="memos-list"></div>
-        </div>
-    </section>
+        <!-- ==================== Coach Memos ==================== -->
+        <section id="coach-memos-app" class="app-section hidden">
+            <h2>코치 메모</h2>
+            <div>
+                <h3>새 메모 작성</h3>
+                <form id="create-memo-form">
+                    <div>
+                        <label for="memo-student-id">학생 선택:</label>
+                        <select id="memo-student-id" required>
+                            <!-- 학생 목록이 여기에 동적으로 로드됩니다. -->
+                        </select>
+                    </div>
+                    <div>
+                        <label for="memo-coach-id">코치 ID:</label>
+                        <input type="text" id="memo-coach-id" value="coach-001" required>
+                    </div>
+                    <div>
+                        <label for="memo-text">메모 내용:</label>
+                        <textarea id="memo-text" rows="3" required></textarea>
+                    </div>
+                    <button type="submit" class="btn-primary">메모 작성</button>
+                </form>
+                <hr>
+                <h3>메모 목록</h3>
+                <button id="refresh-memos-btn">메모 새로고침</button>
+                <div id="memos-list"></div>
+            </div>
+        </section>
 
-    <!-- ==================== Weekly Report ==================== -->
-    <section class="app-section">
-        <h2>주간 리포트</h2>
-        <div id="weekly-report-app">
-            <form id="generate-report-form">
-                <div>
-                    <label for="report-student-id">학생 선택:</label>
-                    <select id="report-student-id" required>
-                        <!-- 학생 목록이 여기에 동적으로 로드됩니다. -->
-                    </select>
-                </div>
-                <div>
-                    <label for="report-start-date">시작일:</label>
-                    <input type="date" id="report-start-date" required>
-                </div>
-                <div>
-                    <label for="report-end-date">종료일:</label>
-                    <input type="date" id="report-end-date" required>
-                </div>
-                <button type="submit" class="btn-primary">리포트 생성</button>
-            </form>
-            <div id="report-display" style="margin-top: 1em;"></div>
-        </div>
-    </section>
+        <!-- ==================== Weekly Report ==================== -->
+        <section id="weekly-report-app" class="app-section hidden">
+            <h2>주간 리포트</h2>
+            <div>
+                <form id="generate-report-form">
+                    <div>
+                        <label for="report-student-id">학생 선택:</label>
+                        <select id="report-student-id" required>
+                            <!-- 학생 목록이 여기에 동적으로 로드됩니다. -->
+                        </select>
+                    </div>
+                    <div>
+                        <label for="report-start-date">시작일:</label>
+                        <input type="date" id="report-start-date" required>
+                    </div>
+                    <div>
+                        <label for="report-end-date">종료일:</label>
+                        <input type="date" id="report-end-date" required>
+                    </div>
+                    <button type="submit" class="btn-primary">리포트 생성</button>
+                </form>
+                <div id="report-display" style="margin-top: 1em;"></div>
 
-    <!-- ==================== Student App ==================== -->
-    <section class="app-section">
-        <h2>학생 일일 복습</h2>
-        <div id="student-app">
-            <button id="start-review-btn" class="btn-primary">오늘의 복습 시작하기</button>
-            <div id="card-container" class="hidden">
-                <div id="card-question"></div>
-                <button id="show-answer-btn" class="btn-primary">정답 보기</button>
-                <div id="card-answer" class="hidden"></div>
-                <div id="feedback-controls" class="hidden">
-                    <hr>
-                    <p>이 카드를 얼마나 잘 기억했나요?</p>
-                    <button data-quality="5">완벽해요 (Easy)</button>
-                    <button data-quality="4">잘했어요 (Good)</button>
-                    <button data-quality="3">알듯말듯 (Hard)</button>
-                    <button data-quality="0">새로워요 (Again)</button>
+                <!-- Coach Review Section (Initially Hidden) -->
+                <div id="coach-review-section" class="hidden" style="margin-top: 1.5em; padding-top: 1.5em; border-top: 2px solid #0056b3;">
+                    <h3>코치 최종 검수</h3>
+                    <p>AI가 생성한 리포트 초안을 검토하고, 최종 코멘트를 작성하여 학부모에게 발송할 수 있습니다.</p>
+                    <textarea id="coach-comment-input" rows="4" style="width: 98%;" placeholder="여기에 최종 코멘트를 입력하세요..."></textarea>
+                    <button id="finalize-report-btn" class="btn-primary" style="margin-top: 0.5em;">최종 승인 및 발송</button>
+                    <div id="finalize-status" style="margin-top: 0.5em;"></div>
                 </div>
             </div>
-            <div id="review-status"></div>
-        </div>
-    </section>
+        </section>
 
-    <!-- ==================== Coach App ==================== -->
-    <section class="app-section">
-        <h2>코치 피드백 시스템</h2>
-        <div id="coach-app">
-            <button id="refresh-btn" class="btn-primary">최신 로그 불러오기</button>
-            <div id="logs-container">
-                <!-- 로그 데이터가 여기에 동적으로 삽입됩니다. -->
+        <!-- ==================== Student App ==================== -->
+        <section id="student-app" class="app-section hidden">
+            <h2>학생 일일 복습</h2>
+            <div>
+                <button id="start-review-btn" class="btn-primary">오늘의 복습 시작하기</button>
+                <div id="card-container" class="hidden">
+                    <div id="card-question"></div>
+                    <button id="show-answer-btn" class="btn-primary">정답 보기</button>
+                    <div id="card-answer" class="hidden"></div>
+                    <div id="feedback-controls" class="hidden">
+                        <hr>
+                        <p>이 카드를 얼마나 잘 기억했나요?</p>
+                        <button data-quality="5">완벽해요 (Easy)</button>
+                        <button data-quality="4">잘했어요 (Good)</button>
+                        <button data-quality="3">알듯말듯 (Hard)</button>
+                        <button data-quality="0">새로워요 (Again)</button>
+                    </div>
+                </div>
+                <div id="review-status"></div>
             </div>
-        </div>
-    </section>
+        </section>
+
+        <!-- ==================== Coach App ==================== -->
+        <section id="coach-app" class="app-section hidden">
+            <h2>코치 피드백 시스템</h2>
+            <div>
+                <button id="refresh-btn" class="btn-primary">최신 로그 불러오기</button>
+                <div id="logs-container">
+                    <!-- 로그 데이터가 여기에 동적으로 삽입됩니다. -->
+                </div>
+            </div>
+        </section>
+    </div>
 
     <script src="app.js"></script>
 </body>

@@ -45,3 +45,31 @@ class CoachMemo(Base):
     student_id = Column(String, nullable=False)
     memo_text = Column(Text, nullable=False)
     created_at = Column(TIMESTAMP, server_default=func.now())
+
+class WeeklyReport(Base):
+    __tablename__ = "weekly_reports"
+
+    report_id = Column(Integer, primary_key=True, index=True)
+    student_id = Column(String, ForeignKey("students.student_id"), nullable=False)
+    report_period_start = Column(Date, nullable=False)
+    report_period_end = Column(Date, nullable=False)
+    
+    # Data Snapshots
+    total_submissions = Column(Integer, nullable=False)
+    llm_judgments_count = Column(Integer, nullable=False)
+    anki_cards_reviewed_count = Column(Integer, nullable=False)
+    new_anki_cards_created_count = Column(Integer, nullable=False)
+    anki_card_summaries = Column(JSON, nullable=False)
+    llm_log_summaries = Column(JSON, nullable=False)
+    coach_memo_summaries = Column(JSON, nullable=False)
+    
+    # Summaries & Comments
+    overall_summary = Column(Text, nullable=False)
+    coach_comment = Column(Text, nullable=True)
+    
+    # Status
+    status = Column(String, nullable=False, default='draft') # e.g., 'draft', 'finalized'
+    
+    # Timestamps
+    created_at = Column(TIMESTAMP, server_default=func.now())
+    finalized_at = Column(TIMESTAMP, nullable=True)

@@ -12,7 +12,7 @@ async def generate_weekly_report_draft(
     student_id: str,
     start_date: date,
     end_date: date
-) -> schemas.WeeklyReportResponse:
+) -> models.WeeklyReport:
     student = await crud.get_student(db, student_id=student_id)
     if not student:
         raise ValueError("Student not found")
@@ -58,7 +58,7 @@ async def generate_weekly_report_draft(
     if coach_memos:
         overall_summary += f"{len(coach_memos)}건의 코치 메모가 기록되었습니다.\n"
 
-    return schemas.WeeklyReportResponse(
+    report_data = schemas.WeeklyReportResponse(
         student_id=student_id,
         student_name=student.name,
         report_period_start=start_date,
@@ -70,5 +70,15 @@ async def generate_weekly_report_draft(
         anki_card_summaries=anki_card_summaries,
         llm_log_summaries=llm_log_summaries,
         coach_memo_summaries=coach_memo_summaries,
-        overall_summary=overall_summary
+        overall_summary=overall_summary,
+        # Fields below are not part of the draft generation, will be populated upon creation
+        report_id=0, # Placeholder, will be assigned by DB
+        status='draft',
+        coach_comment=None,
+        created_at=datetime.now(),
+        finalized_at=None
     )
+
+    # Create the report in the database
+    created_report = await crud.create_weekly_report(db, report_data=report_data)
+    return created_report
