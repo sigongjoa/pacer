@@ -198,8 +198,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 headerTitle: `${report.student_name} 주간 학습 리포트`,
                 headerLink: { webUrl: window.location.href, mobileWebUrl: window.location.href },
                 contents: [
-                    { title: `기간: ${report.report_period_start} ~ ${report.report_period_end}`, description: `AI 분석 및 복습 진행`, link: { webUrl: window.location.href, mobileWebUrl: window.location.href } },
-                    { title: '코치 최종 코멘트', description: report.coach_comment || '코멘트가 없습니다.', link: { webUrl: window.location.href, mobileWebUrl: window.location.href } },
+                    {
+                        title: `기간: ${report.report_period_start} ~ ${report.report_period_end}`,
+                        description: `AI 분석 및 복습 진행`,
+                        imageUrl: "https://via.placeholder.com/150/007BFF/FFFFFF?Text=Report",
+                        link: { webUrl: window.location.href, mobileWebUrl: window.location.href }
+                    },
+                    {
+                        title: '코치 최종 코멘트',
+                        description: report.coach_comment || '코멘트가 없습니다.',
+                        imageUrl: "https://via.placeholder.com/150/28A745/FFFFFF?Text=Coach",
+                        link: { webUrl: window.location.href, mobileWebUrl: window.location.href }
+                    },
                 ],
                 buttons: [ { title: 'Pacer에서 확인하기', link: { webUrl: window.location.href, mobileWebUrl: window.location.href } } ],
             });

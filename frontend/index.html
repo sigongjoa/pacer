@@ -227,13 +227,15 @@
                 </form>
                 <div id="report-display" style="margin-top: 1em;"></div>
 
+                <!-- Share Button (Initially Hidden) -->
+                <button id="share-kakao-btn" class="btn-primary hidden" style="margin-top: 0.5em; background-color: #FEE500; color: #3C1E1E;">카카오톡으로 공유</button>
+
                 <!-- Coach Review Section (Initially Hidden) -->
                 <div id="coach-review-section" class="hidden" style="margin-top: 1.5em; padding-top: 1.5em; border-top: 2px solid #0056b3;">
                     <h3>코치 최종 검수</h3>
                     <p>AI가 생성한 리포트 초안을 검토하고, 최종 코멘트를 작성하여 학부모에게 발송할 수 있습니다.</p>
                     <textarea id="coach-comment-input" rows="4" style="width: 98%;" placeholder="여기에 최종 코멘트를 입력하세요..."></textarea>
                     <button id="finalize-report-btn" class="btn-primary" style="margin-top: 0.5em;">최종 승인 및 발송</button>
-                    <button id="share-kakao-btn" class="btn-primary" style="margin-top: 0.5em; background-color: #FEE500; color: #3C1E1E;">카카오톡으로 공유</button>
                     <div id="finalize-status" style="margin-top: 0.5em;"></div>
                 </div>
             </div>
@@ -274,6 +276,6 @@
     </div>
 
     <script src="config.js"></script>
-    <script src="app.js"></script>
+    <script src="app.js?v=1.1"></script>
 </body>
 </html>
