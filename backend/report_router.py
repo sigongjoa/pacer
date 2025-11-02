@@ -3,6 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from datetime import date
 
 import schemas
+import crud
 import report_generator
 from llm_filter import get_db
 
@@ -24,7 +25,7 @@ async def get_weekly_report(
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
 
-@router.put("/report/{report_id}/finalize", response_model=schemas.WeeklyReportResponse)
+@router.put("/{report_id}/finalize", response_model=schemas.WeeklyReportResponse)
 async def finalize_report(
     report_id: int,
     final_data: schemas.WeeklyReportFinalize,

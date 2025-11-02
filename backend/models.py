@@ -51,6 +51,7 @@ class WeeklyReport(Base):
 
     report_id = Column(Integer, primary_key=True, index=True)
     student_id = Column(String, ForeignKey("students.student_id"), nullable=False)
+    student_name = Column(String, nullable=False)
     report_period_start = Column(Date, nullable=False)
     report_period_end = Column(Date, nullable=False)
     

@@ -127,6 +127,7 @@ async def create_weekly_report(db: AsyncSession, report_data: schemas.WeeklyRepo
 
     db_report = models.WeeklyReport(
         student_id=report_data.student_id,
+        student_name=report_data.student_name,
         report_period_start=report_data.report_period_start,
         report_period_end=report_data.report_period_end,
         total_submissions=report_data.total_submissions,
