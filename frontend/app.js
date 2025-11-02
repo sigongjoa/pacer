@@ -3,7 +3,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Kakao SDK 초기화
     if (Kakao && !Kakao.isInitialized()) {
-        Kakao.init('YOUR_JAVASCRIPT_KEY'); // 여기에 발급받은 JavaScript 키를 넣어주세요.
+        Kakao.init(KAKAO_JS_KEY); // config.js에 정의된 키 사용
     }
 
     // --- Student Management App Logic ---

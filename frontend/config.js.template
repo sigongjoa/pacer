@@ -1,0 +1,6 @@
+// 이 파일을 복사하여 config.js 파일을 만드세요.
+// Copy this file to create a config.js file.
+
+// 카카오 개발자 사이트에서 발급받은 JavaScript 키를 여기에 입력하세요.
+// Enter your JavaScript key issued from the Kakao Developers site here.
+const KAKAO_JS_KEY = 'YOUR_JAVASCRIPT_KEY';
