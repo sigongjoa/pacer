@@ -5420,6 +5420,16 @@ document.addEventListener('DOMContentLoaded', () => {
         const navLinks = sidebar.querySelectorAll('.nav-link');
         const pages = document.querySelectorAll('#main-content .app-section');
 
+        // Set initial page
+        const initialTarget = sidebar.querySelector('.nav-link.active').dataset.target;
+        pages.forEach(page => {
+            if (page.id === initialTarget) {
+                page.classList.remove('hidden');
+            } else {
+                page.classList.add('hidden');
+            }
+        });
+
         sidebar.addEventListener('click', (e) => {
             if (!e.target.classList.contains('nav-link')) return;
             e.preventDefault();
