@@ -98,15 +98,35 @@ Your JSON Response:"""
 
     # LLM이 APPROVE 결정을 내리면 Anki 카드를 생성합니다.
     if new_log.decision == "APPROVE":
-        # 임시로 질문과 답변을 생성 (실제로는 더 정교한 로직 필요)
-        question = f"'''{request.error_context.concept_name}'''에 대해 설명하세요."
-        answer = f"'''{request.error_context.concept_name}'''은 ... 입니다. (LLM 응답 기반)"
+        # LLM에게 Anki 카드 질문과 답변 생성을 요청하는 새로운 프롬프트
+        anki_prompt = f"""[SYSTEM]
+You are an AI assistant that generates Anki flashcards. Your output must be in JSON format with two keys: "question" (string) and "answer" (string). Do not add any other text.
+
+[INSTRUCTIONS]
+- Based on the provided concept and student's mistake, create a concise Anki flashcard.
+- The question should test the core concept the student misunderstood.
+- The answer should clearly explain the concept or correct the mistake.
+- Both question and answer should be in Korean.
+
+[CURRENT TASK]
+Concept: {request.error_context.concept_name}
+Student's Mistake Summary: {request.error_context.student_mistake_summary}
+Your JSON Response:"""
         
+        try:
+            anki_llm_response = await call_ollama_api(anki_prompt)
+            generated_question = anki_llm_response.get("question", f"'''{request.error_context.concept_name}'''에 대해 설명하세요.")
+            generated_answer = anki_llm_response.get("answer", f"'''{request.error_context.concept_name}'''은 ... 입니다. (LLM 응답 기반)")
+        except HTTPException as e:
+            print(f"Warning: Failed to generate Anki card content with LLM: {e}. Using fallback.")
+            generated_question = f"'''{request.error_context.concept_name}'''에 대해 설명하세요."
+            generated_answer = f"'''{request.error_context.concept_name}'''은 ... 입니다. (LLM 응답 실패)"
+
         anki_card_data = schemas.AnkiCardCreate(
             student_id=request.student_id,
             llm_log_id=new_log.log_id,
-            question=question,
-            answer=answer
+            question=generated_question,
+            answer=generated_answer
         )
         await crud.create_anki_card(db=db, card=anki_card_data)
 
