@@ -187,3 +187,16 @@ class WeeklyReportFinalize(BaseModel):
 class LLMLogFilterParams(BaseModel):
     start_date: Optional[date] = None
     end_date: Optional[date] = None
+
+# Coaching Suggestions Schemas
+class CoachingSuggestion(BaseModel):
+    category: str # e.g., "Concept Reinforcement", "Study Habit", "Motivation"
+    suggestion: str
+    priority: str # e.g., "High", "Medium", "Low"
+
+class CoachingSuggestionsResponse(BaseModel):
+    student_id: str
+    overall_assessment: str
+    suggestions: List[CoachingSuggestion]
+
+    model_config = ConfigDict(from_attributes=True)
