@@ -66,27 +66,33 @@ async def get_logs(
 
 @router.post("/judge", response_model=schemas.JudgeResponse)
 async def judge_anki_necessity(request: schemas.JudgeRequest, db: AsyncSession = Depends(get_db)):
-    # --- A/B Testing: Traffic Splitting (Conceptual) ---
-    # Get active production and staging models
+    # --- Model Selection and A/B Testing: Traffic Splitting (Conceptual) ---
+    # Get active production and staging models from the registry
     production_model_info = model_registry.get_active_production_model()
-    staging_models_info = model_registry.list_production_models() # Includes staging models
+    all_registered_models = model_registry.list_models()
     
-    # Filter out the active production model from staging list if it's there
-    staging_models_info = [m for m in staging_models_info if m.get("production_status") == "staging"]
+    # Filter for staging models that are not the current production model
+    staging_models_info = [
+        m for v, m in all_registered_models.items() 
+        if m.get("production_status") == "staging" and v != production_model_info.get("version") if production_model_info else True
+    ]
 
-    # Default to base model if no production model is active
-    current_model_name = "llama2:latest"
-    current_model_version = "base_v1"
-
-    if production_model_info:
-        current_model_name = production_model_info.get("metadata", {}).get("base_model", "llama2:latest") # Assuming base_model is stored in metadata
-        current_model_version = production_model_info["version"]
+    # Default to a base model if no production model is active
+    selected_model_name = "llama2:latest" # Default model name for Ollama
+    selected_model_version = "base_v1" # Default version if no registered model is active
 
     # Simple traffic split: 80% to production, 20% to a random staging model (if available)
-    if staging_models_info and random.random() < 0.2:
+    if production_model_info and staging_models_info and random.random() < 0.2: # 20% chance for staging
         selected_staging_model = random.choice(staging_models_info)
-        current_model_name = selected_staging_model.get("metadata", {}).get("base_model", "llama2:latest")
-        current_model_version = selected_staging_model["version"]
+        selected_model_name = selected_staging_model.get("metadata", {}).get("base_model", "llama2:latest")
+        selected_model_version = selected_staging_model["version"]
+        print(f"Using staging model: {selected_model_version}")
+    elif production_model_info:
+        selected_model_name = production_model_info.get("metadata", {}).get("base_model", "llama2:latest")
+        selected_model_version = production_model_info["version"]
+        print(f"Using production model: {selected_model_version}")
+    else:
+        print(f"Using default base model: {selected_model_version}")
 
     # V1 경량화 원칙에 따라, LLM에 전달할 간결한 프롬프트를 생성합니다.
     prompt = f"""[SYSTEM]
@@ -111,7 +117,7 @@ Your JSON Response: {{"decision": "REJECT", "reason": "개념 이해보다는 �
 [CURRENT TASK]
 User Mistake Context: {{ "concept": "{request.error_context.concept_name}", "mistake": "{request.error_context.student_mistake_summary}" }}
 Your JSON Response:"""
-    llm_response = await call_ollama_api(prompt, model_name=current_model_name)
+    llm_response = await call_ollama_api(prompt, model_name=selected_model_name)
     
     # LLM 판단 결과를 실제 DB에 저장
     new_log = await crud.create_llm_log(
@@ -120,7 +126,7 @@ Your JSON Response:"""
         decision=llm_response.get("decision", "REJECT"), 
         reason=llm_response.get("reason", "LLM response format error."),
         concept_name=request.error_context.concept_name,
-        model_version=current_model_version # Store the model version used
+        model_version=selected_model_version # Store the model version used
     )
 
     # LLM이 APPROVE 결정을 내리면 Anki 카드를 생성합니다.
@@ -141,7 +147,7 @@ Student's Mistake Summary: {request.error_context.student_mistake_summary}
 Your JSON Response:"""
         
         try:
-            anki_llm_response = await call_ollama_api(anki_prompt, model_name=current_model_name)
+            anki_llm_response = await call_ollama_api(anki_prompt, model_name=selected_model_name)
             generated_question = anki_llm_response.get("question", f"'''{request.error_context.concept_name}'''에 대해 설명하세요.")
             generated_answer = anki_llm_response.get("answer", f"'''{request.error_context.concept_name}'''은 ... 입니다. (LLM 응답 기반)")
         except HTTPException as e:

@@ -2,10 +2,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from datetime import date, timedelta, datetime
 from typing import List, Optional
+import json
 
 import schemas
 import models
 import crud
+from llm_filter import call_ollama_api # Import the LLM call function
 
 async def generate_weekly_report_draft(
     db: AsyncSession,
@@ -51,12 +53,53 @@ async def generate_weekly_report_draft(
     llm_log_summaries = [schemas.ReportLLMLogSummary.model_validate(log) for log in llm_logs]
     coach_memo_summaries = [schemas.ReportCoachMemoSummary.model_validate(memo) for memo in coach_memos]
 
-    # Generate a simple overall summary
-    overall_summary = f"{student.name} 학생의 {start_date}부터 {end_date}까지의 주간 학습 리포트입니다.\n"
-    overall_summary += f"총 {llm_judgments_count}건의 AI 판단이 있었고, 이 중 {new_anki_cards_created_count}개의 새로운 Anki 카드가 생성되었습니다.\n"
-    overall_summary += f"총 {anki_cards_reviewed_count}개의 Anki 카드를 복습했습니다.\n"
-    if coach_memos:
-        overall_summary += f"{len(coach_memos)}건의 코치 메모가 기록되었습니다.\n"
+    # --- LLM-powered Overall Summary and Coach Comment Suggestion ---
+    report_context = {
+        "student_name": student.name,
+        "report_period": f"{start_date} ~ {end_date}",
+        "llm_judgments": [{
+            "concept_name": log.concept_name,
+            "decision": log.decision,
+            "reason": log.reason,
+            "coach_feedback": log.coach_feedback
+        } for log in llm_logs],
+        "anki_card_reviews": [{
+            "question": card.question,
+            "repetitions": card.repetitions,
+            "next_review_date": card.next_review_date.isoformat() if card.next_review_date else None
+        } for card in anki_cards if card.last_reviewed_at and card.last_reviewed_at.date() >= start_date and card.last_reviewed_at.date() <= end_date],
+        "new_anki_cards": [{
+            "question": card.question,
+            "concept_name": llm_log.concept_name if (llm_log := next((l for l in llm_logs if l.log_id == card.llm_log_id), None)) else "N/A"
+        } for card in anki_cards if card.created_at and card.created_at.date() >= start_date and card.created_at.date() <= end_date],
+        "coach_memos": [{
+            "memo_text": memo.memo_text,
+            "created_at": memo.created_at.isoformat()
+        } for memo in coach_memos]
+    }
+
+    llm_report_prompt = f"""[SYSTEM]
+You are an AI assistant that generates insightful weekly learning reports for students and suggests coach comments. Your output must be in JSON format with two keys: "overall_summary" (string) and "coach_comment_suggestion" (string). Do not add any other text.
+
+[INSTRUCTIONS]
+- Analyze the provided student learning data for the week.
+- The "overall_summary" should be a concise, encouraging summary of the student's progress, highlighting key achievements and areas for improvement based on LLM judgments, Anki reviews, and new cards.
+- The "coach_comment_suggestion" should be a professional and actionable comment for the coach to review and potentially use, focusing on personalized advice.
+- Both outputs should be in Korean.
+
+[STUDENT LEARNING DATA]
+{json.dumps(report_context, ensure_ascii=False, indent=2)}
+
+Your JSON Response:"""
+
+    llm_report_response = {"overall_summary": "LLM 요약 생성 실패", "coach_comment_suggestion": "LLM 코멘트 생성 실패"}
+    try:
+        llm_report_response = await call_ollama_api(llm_report_prompt)
+    except Exception as e:
+        print(f"Warning: Failed to generate LLM report summary: {e}. Using fallback.")
+
+    overall_summary = llm_report_response.get("overall_summary", "LLM 요약 생성 실패")
+    coach_comment_suggestion = llm_report_response.get("coach_comment_suggestion", "LLM 코멘트 생성 실패")
 
     report_data = schemas.WeeklyReportResponse(
         student_id=student_id,
@@ -71,10 +114,10 @@ async def generate_weekly_report_draft(
         llm_log_summaries=llm_log_summaries,
         coach_memo_summaries=coach_memo_summaries,
         overall_summary=overall_summary,
+        coach_comment=coach_comment_suggestion, # Use LLM suggestion here
         # Fields below are not part of the draft generation, will be populated upon creation
         report_id=0, # Placeholder, will be assigned by DB
         status='draft',
-        coach_comment=None,
         created_at=datetime.now(),
         finalized_at=None
     )
