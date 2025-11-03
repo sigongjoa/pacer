@@ -48,6 +48,7 @@ async def get_logs(
     limit: int = 20,
     start_date: Optional[date] = Query(None, description="Filter logs from this date (inclusive). Defaults to 7 days ago."),
     end_date: Optional[date] = Query(None, description="Filter logs up to this date (inclusive). Defaults to today."),
+    student_id: Optional[str] = Query(None, description="Filter logs by student ID."),
     db: AsyncSession = Depends(get_db)
 ):
     # 기본값 설정 (7일 전부터 오늘까지)
@@ -56,7 +57,7 @@ async def get_logs(
     if start_date is None:
         start_date = end_date - timedelta(days=6) # 7일간의 데이터를 포함하도록 6일 전으로 설정
 
-    logs = await crud.get_llm_logs(db, skip=skip, limit=limit, start_date=start_date, end_date=end_date)
+    logs = await crud.get_llm_logs(db, skip=skip, limit=limit, start_date=start_date, end_date=end_date, student_id=student_id)
     return logs
 
 @router.post("/judge", response_model=schemas.JudgeResponse)

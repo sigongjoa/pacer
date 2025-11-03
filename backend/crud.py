@@ -15,7 +15,8 @@ async def get_llm_logs(
     skip: int = 0,
     limit: int = 20,
     start_date: Optional[date] = None,
-    end_date: Optional[date] = None
+    end_date: Optional[date] = None,
+    student_id: Optional[str] = None
 ) -> List[models.LLMLog]:
     query = select(models.LLMLog).offset(skip).limit(limit).order_by(models.LLMLog.created_at.desc())
 
@@ -25,6 +26,9 @@ async def get_llm_logs(
     if end_date:
         # end_date는 해당 날짜의 자정까지 포함해야 하므로, 다음 날의 자정 직전으로 설정
         conditions.append(models.LLMLog.created_at < (end_date + timedelta(days=1)))
+    if student_id:
+        # submission_id에서 학생 ID를 추출하여 비교 (submission_id 형식: "{student_id}-{...}")
+        conditions.append(models.LLMLog.submission_id.like(f"{student_id}-%"))
 
     if conditions:
         query = query.where(and_(*conditions))

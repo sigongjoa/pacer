@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Coach Feedback Dashboard</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+    <div class="container mt-5">
+        <h1>Coach Feedback Dashboard</h1>
+        <div class="form-row">
+            <div class="form-group col-md-4">
+                <label for="studentIdFilter">Student ID</label>
+                <input type="text" class="form-control" id="studentIdFilter" placeholder="Enter Student ID">
+            </div>
+            <div class="form-group col-md-4">
+                <label for="startDateFilter">Start Date</label>
+                <input type="date" class="form-control" id="startDateFilter">
+            </div>
+            <div class="form-group col-md-4">
+                <label for="endDateFilter">End Date</label>
+                <input type="date" class="form-control" id="endDateFilter">
+            </div>
+        </div>
+        <button id="filterBtn" class="btn btn-primary">Filter</button>
+        <table class="table mt-3">
+            <thead>
+                <tr>
+                    <th>Log ID</th>
+                    <th>Submission ID</th>
+                    <th>Decision</th>
+                    <th>Reason</th>
+                    <th>Created At</th>
+                    <th>Feedback</th>
+                </tr>
+            </thead>
+            <tbody id="logsTableBody">
+                <!-- Logs will be dynamically inserted here -->
+            </tbody>
+        </table>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script src="feedback.js"></script>
+</body>
+</html>
