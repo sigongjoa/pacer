@@ -1,0 +1,95 @@
+name: MLOps Pipeline with Vertex AI
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - 'scripts/**'
+      - 'backend/**'
+      - 'finetuning_data.jsonl'
+
+jobs:
+  build-and-deploy-ml-model:
+    runs-on: ubuntu-latest
+    env:
+      GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+      GCP_REGION: us-central1
+      VERTEX_AI_MODEL_NAME: pacer-llm
+      VERTEX_AI_ENDPOINT_ID: pacer-llm-endpoint
+      GCS_MODEL_BUCKET: gs://your-model-bucket
+      # A/B Testing Configuration (can be set as secrets or job inputs)
+      AB_TEST_TRAFFIC_SPLIT: 0.2 # 20% traffic to staging
+      AB_TEST_STAGING_MODEL_VERSION: v2.1 # Specific model version for A/B test
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r backend/requirements.txt
+        # pip install google-cloud-aiplatform # In a real scenario
+
+    - name: Authenticate to GCP
+      uses: google-github-actions/auth@v1
+      with:
+        credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+    - name: Export Fine-tuning Data
+      run: |
+        python scripts/export_finetuning_data.py --output_path finetuning_data.jsonl
+
+    - name: Simulate Fine-tuning and Model Registration (Vertex AI)
+      id: finetune
+      run: |
+        NEW_MODEL_VERSION="v$(date +%Y%m%d%H%M%S)"
+        python scripts/run_finetuning_job.py \
+          --data_path finetuning_data.jsonl \
+          --base_model_name llama2:latest \
+          --new_model_version $NEW_MODEL_VERSION \
+          --epochs 5 \
+          --model_output_path ./models
+        echo "new_model_version=$NEW_MODEL_VERSION" >> $GITHUB_OUTPUT
+
+    - name: Simulate Model Evaluation (Conceptual)
+      run: |
+        echo "Simulating model evaluation for ${{ steps.finetune.outputs.new_model_version }}"...
+        # In a real scenario, this would involve running evaluation scripts
+        # and logging metrics to Vertex AI Experiments.
+        # Example: python scripts/evaluate_model.py --model_version ${{ steps.finetune.outputs.new_model_version }}
+
+    - name: Simulate Model Deployment to Staging (Vertex AI)
+      run: |
+        python scripts/deploy_model.py \
+          --model_name $VERTEX_AI_MODEL_NAME \
+          --version ${{ steps.finetune.outputs.new_model_version }} \
+          --endpoint_id $VERTEX_AI_ENDPOINT_ID \
+          --traffic_split_percentage 20 # Deploy to staging with 20% traffic
+
+    - name: Simulate Monitoring Staging Model (Vertex AI)
+      run: |
+        python scripts/monitor_model_performance.py \
+          --model_name $VERTEX_AI_MODEL_NAME \
+          --version ${{ steps.finetune.outputs.new_model_version }} \
+          --endpoint_id $VERTEX_AI_ENDPOINT_ID
+
+    - name: Decide on Promotion to Production (Manual/Conceptual)
+      run: |
+        echo "Manual review and decision needed to promote ${{ steps.finetune.outputs.new_model_version }} to production."
+        echo "If promoted, run deploy_model.py with --traffic_split_percentage 100."
+        # In a real scenario, this could be automated based on monitoring metrics
+        # or require a manual approval step in the CI/CD pipeline.
+
+    - name: Update A/B Test Configuration (Conceptual)
+      run: |
+        echo "Updating A/B test configuration for frontend/backend to use new staging model."
+        # This step would update feature flags or configuration files
+        # to direct traffic to the new staging model for A/B testing.
+        # For example, update a config map in Kubernetes or a feature flag service.
