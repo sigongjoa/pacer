@@ -9,6 +9,7 @@ from submission_router import router as submission_router
 from coach_router import router as coach_router
 from report_router import router as report_router
 from parent_router import router as parent_router
+from analysis_router import router as analysis_router
 
 from database import engine, Base
 import models # 모든 모델을 임포트하여 Base.metadata에 등록
@@ -39,6 +40,7 @@ app.include_router(submission_router)
 app.include_router(coach_router)
 app.include_router(report_router)
 app.include_router(parent_router)
+app.include_router(analysis_router)
 
 @app.get("/")
 def read_root():

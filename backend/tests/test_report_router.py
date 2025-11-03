@@ -18,8 +18,8 @@ async def test_generate_weekly_report(client_with_db: TestClient, async_session:
     await crud.create_student(async_session, schemas.StudentCreate(student_id=student_id, name="Report Test Student"))
 
     # Create LLM Logs
-    await crud.create_llm_log(async_session, submission_id="sub-001", decision="APPROVE", reason="Concept error")
-    await crud.create_llm_log(async_session, submission_id="sub-002", decision="REJECT", reason="Typo")
+    await crud.create_llm_log(async_session, submission_id="sub-001", decision="APPROVE", reason="Concept error", concept_name="Test Concept 1")
+    await crud.create_llm_log(async_session, submission_id="sub-002", decision="REJECT", reason="Typo", concept_name="Test Concept 2")
 
     # Create Anki Cards and simulate review
     card1 = await crud.create_anki_card(async_session, schemas.AnkiCardCreate(student_id=student_id, llm_log_id=1, question="Q1", answer="A1"))

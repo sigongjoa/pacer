@@ -36,8 +36,8 @@ async def get_llm_logs(
     result = await db.execute(query)
     return result.scalars().all()
 
-async def create_llm_log(db: AsyncSession, submission_id: int, decision: str, reason: str) -> models.LLMLog:
-    db_log = models.LLMLog(submission_id=submission_id, decision=decision, reason=reason)
+async def create_llm_log(db: AsyncSession, submission_id: int, decision: str, reason: str, concept_name: str) -> models.LLMLog:
+    db_log = models.LLMLog(submission_id=submission_id, decision=decision, reason=reason, concept_name=concept_name)
     db.add(db_log)
     await db.flush()
     await db.refresh(db_log)
@@ -182,6 +182,29 @@ async def get_coach_memos(db: AsyncSession, student_id: str, coach_id: Optional[
     query = query.order_by(models.CoachMemo.created_at.desc()).offset(skip).limit(limit)
     result = await db.execute(query)
     return result.scalars().all()
+
+async def get_bad_feedback_summary(db: AsyncSession) -> dict:
+    """
+    Analyzes LLM logs with 'BAD' feedback and returns a summary grouped by 
+    reason_code and concept_name.
+    """
+    query = (
+        select(
+            models.LLMLog.reason_code,
+            models.LLMLog.concept_name,
+            func.count(models.LLMLog.log_id).label('count')
+        )
+        .where(models.LLMLog.coach_feedback == 'BAD')
+        .group_by(models.LLMLog.reason_code, models.LLMLog.concept_name)
+        .order_by(func.count(models.LLMLog.log_id).desc())
+    )
+
+    result = await db.execute(query)
+    summary = result.all()
+
+    # Process the summary into a more structured format if needed
+    # For now, returning as a list of tuples/namedtuples
+    return [dict(row) for row in summary]
 
 def json_serial(obj):
     """JSON serializer for objects not serializable by default json code"""

@@ -92,7 +92,8 @@ Your JSON Response:"""
         db=db, 
         submission_id=request.submission_id, 
         decision=llm_response.get("decision", "REJECT"), 
-        reason=llm_response.get("reason", "LLM response format error.")
+        reason=llm_response.get("reason", "LLM response format error."),
+        concept_name=request.error_context.concept_name
     )
 
     # LLM이 APPROVE 결정을 내리면 Anki 카드를 생성합니다.
