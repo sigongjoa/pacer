@@ -1,6 +1,27 @@
-from sqlalchemy import Column, Integer, String, Text, TIMESTAMP, ForeignKey, Date, JSON
+from sqlalchemy import Column, Integer, String, Text, TIMESTAMP, ForeignKey, Date, JSON, Table
+from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from database import Base
+
+student_parent_association = Table(
+    'student_parent_association',
+    Base.metadata,
+    Column('student_id', String, ForeignKey('students.student_id'), primary_key=True),
+    Column('parent_id', Integer, ForeignKey('parents.parent_id'), primary_key=True)
+)
+
+class Parent(Base):
+    __tablename__ = "parents"
+
+    parent_id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, nullable=False)
+    kakao_user_id = Column(String, unique=True, index=True, nullable=True)
+
+    students = relationship(
+        "Student",
+        secondary=student_parent_association,
+        back_populates="parents"
+    )
 
 class LLMLog(Base):
     __tablename__ = "llm_logs"
@@ -36,6 +57,11 @@ class Student(Base):
     student_id = Column(String, primary_key=True, index=True)
     name = Column(String, nullable=False)
     settings = Column(JSON, nullable=False, default={})
+    parents = relationship(
+        "Parent",
+        secondary=student_parent_association,
+        back_populates="students"
+    )
 
 class CoachMemo(Base):
     __tablename__ = "coach_memos"

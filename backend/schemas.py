@@ -78,10 +78,23 @@ class StudentCreate(BaseModel):
     name: str
     settings: Dict[str, Any] = {}
 
+class ParentBase(BaseModel):
+    name: str
+    kakao_user_id: Optional[str] = None
+
+class ParentCreate(ParentBase):
+    pass
+
+class ParentResponse(ParentBase):
+    parent_id: int
+
+    model_config = ConfigDict(from_attributes=True)
+
 class StudentResponse(BaseModel):
     student_id: str
     name: str
     settings: Dict[str, Any]
+    parents: List[ParentResponse] = [] # 추가
 
     model_config = ConfigDict(from_attributes=True) # 추가
 

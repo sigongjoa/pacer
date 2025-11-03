@@ -1,6 +1,7 @@
 import json
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import func, and_
+from sqlalchemy.orm import selectinload
 from sqlalchemy.future import select
 from datetime import date, timedelta, datetime
 from typing import List, Optional # Optional 추가
@@ -95,17 +96,57 @@ async def create_student(db: AsyncSession, student: schemas.StudentCreate) -> mo
     return db_student
 
 async def get_student(db: AsyncSession, student_id: str) -> Optional[models.Student]:
-    result = await db.execute(select(models.Student).where(models.Student.student_id == student_id))
+    result = await db.execute(
+        select(models.Student)
+        .options(selectinload(models.Student.parents))
+        .where(models.Student.student_id == student_id)
+    )
     return result.scalars().first()
 
 async def get_students(db: AsyncSession, skip: int = 0, limit: int = 100) -> List[models.Student]:
-    result = await db.execute(select(models.Student).offset(skip).limit(limit))
+    result = await db.execute(
+        select(models.Student)
+        .options(selectinload(models.Student.parents))
+        .offset(skip)
+        .limit(limit)
+    )
     return result.scalars().all()
 
 async def update_student(db: AsyncSession, student_id: str, student: schemas.StudentUpdate) -> Optional[models.Student]:
     db_student = await get_student(db, student_id=student_id)
     if db_student:
         db_student.settings = student.settings
+        await db.flush()
+        await db.refresh(db_student)
+    return db_student
+
+async def create_parent(db: AsyncSession, parent: schemas.ParentCreate) -> models.Parent:
+    db_parent = models.Parent(
+        name=parent.name,
+        kakao_user_id=parent.kakao_user_id
+    )
+    db.add(db_parent)
+    await db.flush()
+    await db.refresh(db_parent)
+    return db_parent
+
+async def get_parent(db: AsyncSession, parent_id: int) -> Optional[models.Parent]:
+    result = await db.execute(select(models.Parent).where(models.Parent.parent_id == parent_id))
+    return result.scalars().first()
+
+async def get_parents_by_student(db: AsyncSession, student_id: str) -> List[models.Parent]:
+    result = await db.execute(
+        select(models.Parent)
+        .join(models.student_parent_association)
+        .where(models.student_parent_association.c.student_id == student_id)
+    )
+    return result.scalars().all()
+
+async def assign_parent_to_student(db: AsyncSession, student_id: str, parent_id: int) -> Optional[models.Student]:
+    db_student = await get_student(db, student_id=student_id)
+    db_parent = await get_parent(db, parent_id=parent_id)
+    if db_student and db_parent:
+        db_student.parents.append(db_parent)
         await db.flush()
         await db.refresh(db_student)
     return db_student

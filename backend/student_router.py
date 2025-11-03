@@ -23,7 +23,8 @@ async def create_student(student: schemas.StudentCreate, db: AsyncSession = Depe
     db_student = await crud.get_student(db, student_id=student.student_id)
     if db_student:
         raise HTTPException(status_code=400, detail="Student already registered")
-    return await crud.create_student(db=db, student=student)
+    await crud.create_student(db=db, student=student)
+    return await crud.get_student(db, student_id=student.student_id)
 
 @router.get("/{student_id}/daily_review_deck", response_model=schemas.DailyReviewDeckResponse)
 async def get_daily_review_deck(student_id: str, db: AsyncSession = Depends(get_db)):
@@ -41,4 +42,4 @@ async def update_student_settings(student_id: str, student: schemas.StudentUpdat
     updated_student = await crud.update_student(db, student_id=student_id, student=student)
     if not updated_student:
         raise HTTPException(status_code=404, detail="Student not found")
-    return updated_student
+    return await crud.get_student(db, student_id=student_id)
