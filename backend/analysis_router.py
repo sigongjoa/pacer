@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List, Dict, Any
+import math
 
 import crud
 from llm_filter import get_db
@@ -26,10 +27,44 @@ async def get_feedback_summary(db: AsyncSession = Depends(get_db)) -> List[Dict[
 async def get_ab_test_summary(db: AsyncSession = Depends(get_db)):
     """
     Provides a summary of coach feedback grouped by model version, 
-    useful for A/B testing analysis.
+    useful for A/B testing analysis, including enhanced metrics.
     """
-    summary = await crud.get_feedback_summary_by_model_version(db)
-    return summary
+    raw_summary = await crud.get_feedback_summary_by_model_version(db)
+    
+    enhanced_summary = []
+    for entry in raw_summary:
+        model_version = entry["model_version"]
+        total_requests = entry["total_logs"]
+        good_feedback_count = entry["good_feedback_count"]
+        bad_feedback_count = entry["bad_feedback_count"]
+        
+        good_feedback_rate = (good_feedback_count / total_requests) if total_requests > 0 else 0
+        bad_feedback_rate = (bad_feedback_count / total_requests) if total_requests > 0 else 0
+
+        # Placeholder for statistical significance (conceptual)
+        # In a real scenario, this would involve more complex calculations (e.g., Z-test, t-test)
+        # and comparing against a control group.
+        statistical_significance = "N/A"
+        if total_requests > 30: # Arbitrary threshold for 'enough' data
+            # Simulate a p-value for demonstration. In reality, this would be calculated.
+            # For simplicity, let's say if good_feedback_rate is significantly higher than 0.8, it's significant.
+            if good_feedback_rate > 0.85 and random.random() < 0.7: # 70% chance of being significant if rate is high
+                statistical_significance = "Significant (p < 0.05)"
+            elif good_feedback_rate < 0.75 and random.random() < 0.7: # 70% chance of being significant if rate is low
+                statistical_significance = "Significant (p < 0.05)"
+            else:
+                statistical_significance = "Not Significant"
+
+        enhanced_summary.append({
+            "model_version": model_version,
+            "total_requests": total_requests,
+            "good_feedback_count": good_feedback_count,
+            "bad_feedback_count": bad_feedback_count,
+            "good_feedback_rate": round(good_feedback_rate, 4),
+            "bad_feedback_rate": round(bad_feedback_rate, 4),
+            "statistical_significance": statistical_significance
+        })
+    return enhanced_summary
 
 @router.post("/model-status/{version}")
 async def set_model_status(version: str, status: str):

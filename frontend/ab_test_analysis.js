@@ -11,23 +11,35 @@ document.addEventListener('DOMContentLoaded', () => {
             renderAbTestSummary(summaryData);
         } catch (error) {
             console.error('Error fetching A/B test summary:', error);
-            abTestSummaryTableBody.innerHTML = '<tr><td colspan="3" class="text-center text-danger">Failed to load A/B test summary.</td></tr>';
+            abTestSummaryTableBody.innerHTML = '<tr><td colspan="7" class="text-center text-danger">Failed to load A/B test summary.</td></tr>';
         }
     };
 
     const renderAbTestSummary = (summary) => {
         abTestSummaryTableBody.innerHTML = '';
         if (!summary || summary.length === 0) {
-            abTestSummaryTableBody.innerHTML = '<tr><td colspan="3" class="text-center">No A/B test data found.</td></tr>';
+            abTestSummaryTableBody.innerHTML = '<tr><td colspan="7" class="text-center">No A/B test data found.</td></tr>';
             return;
         }
 
         summary.forEach(item => {
             const row = document.createElement('tr');
+            const goodFeedbackRate = (item.good_feedback_rate * 100).toFixed(2);
+            const badFeedbackRate = (item.bad_feedback_rate * 100).toFixed(2);
+            
+            let significanceClass = '';
+            if (item.statistical_significance.includes("Significant")) {
+                significanceClass = item.statistical_significance.includes("Not") ? 'text-warning' : 'text-success';
+            }
+
             row.innerHTML = `
                 <td>${item.model_version || 'N/A'}</td>
-                <td>${item.coach_feedback || 'N/A'}</td>
-                <td>${item.count}</td>
+                <td>${item.total_requests}</td>
+                <td>${item.good_feedback_count}</td>
+                <td>${item.bad_feedback_count}</td>
+                <td>${goodFeedbackRate}%</td>
+                <td>${badFeedbackRate}%</td>
+                <td class="${significanceClass}">${item.statistical_significance}</td>
             `;
             abTestSummaryTableBody.appendChild(row);
         });

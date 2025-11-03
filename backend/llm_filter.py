@@ -1,6 +1,7 @@
 import httpx
 import json
 import random
+import os
 from datetime import date, timedelta
 from typing import List, Optional
 from fastapi import APIRouter, HTTPException, Depends, Query
@@ -13,6 +14,12 @@ from backend.model_registry import ModelRegistry # Import ModelRegistry
 
 # Initialize ModelRegistry
 model_registry = ModelRegistry()
+
+# Configuration for A/B testing
+# Traffic split percentage for staging model (e.g., 0.2 for 20% traffic)
+AB_TEST_TRAFFIC_SPLIT = float(os.getenv("AB_TEST_TRAFFIC_SPLIT", "0.2"))
+# Specific staging model version to test. If not set, a random staging model will be chosen.
+AB_TEST_STAGING_MODEL_VERSION = os.getenv("AB_TEST_STAGING_MODEL_VERSION", None)
 
 # Dependency to get DB session
 async def get_db():
@@ -67,32 +74,47 @@ async def get_logs(
 @router.post("/judge", response_model=schemas.JudgeResponse)
 async def judge_anki_necessity(request: schemas.JudgeRequest, db: AsyncSession = Depends(get_db)):
     # --- Model Selection and A/B Testing: Traffic Splitting (Conceptual) ---
-    # Get active production and staging models from the registry
     production_model_info = model_registry.get_active_production_model()
     all_registered_models = model_registry.list_models()
     
-    # Filter for staging models that are not the current production model
     staging_models_info = [
         m for v, m in all_registered_models.items() 
-        if m.get("production_status") == "staging" and v != production_model_info.get("version") if production_model_info else True
+        if m.get("production_status") == "staging"
     ]
 
-    # Default to a base model if no production model is active
     selected_model_name = "llama2:latest" # Default model name for Ollama
     selected_model_version = "base_v1" # Default version if no registered model is active
 
-    # Simple traffic split: 80% to production, 20% to a random staging model (if available)
-    if production_model_info and staging_models_info and random.random() < 0.2: # 20% chance for staging
-        selected_staging_model = random.choice(staging_models_info)
-        selected_model_name = selected_staging_model.get("metadata", {}).get("base_model", "llama2:latest")
-        selected_model_version = selected_staging_model["version"]
-        print(f"Using staging model: {selected_model_version}")
+    # Determine which model to use based on A/B test configuration
+    if production_model_info and staging_models_info and random.random() < AB_TEST_TRAFFIC_SPLIT:
+        # Use a specific staging model if configured, otherwise pick a random one
+        if AB_TEST_STAGING_MODEL_VERSION:
+            selected_staging_model = next((m for v, m in all_registered_models.items() if v == AB_TEST_STAGING_MODEL_VERSION and m.get("production_status") == "staging"), None)
+            if selected_staging_model:
+                selected_model_name = selected_staging_model.get("metadata", {}).get("base_model", "llama2:latest")
+                selected_model_version = selected_staging_model["version"]
+                print(f"[A/B Test] Using configured staging model: {selected_model_version}")
+            else:
+                print(f"[A/B Test] Configured staging model {AB_TEST_STAGING_MODEL_VERSION} not found or not in staging. Falling back to production/default.")
+                # Fallback to production or default if configured staging model is not available
+                if production_model_info:
+                    selected_model_name = production_model_info.get("metadata", {}).get("base_model", "llama2:latest")
+                    selected_model_version = production_model_info["version"]
+                    print(f"[A/B Test] Falling back to production model: {selected_model_version}")
+                else:
+                    print(f"[A/B Test] Falling back to default base model: {selected_model_version}")
+        else:
+            # Pick a random staging model
+            selected_staging_model = random.choice(staging_models_info)
+            selected_model_name = selected_staging_model.get("metadata", {}).get("base_model", "llama2:latest")
+            selected_model_version = selected_staging_model["version"]
+            print(f"[A/B Test] Using random staging model: {selected_model_version}")
     elif production_model_info:
         selected_model_name = production_model_info.get("metadata", {}).get("base_model", "llama2:latest")
         selected_model_version = production_model_info["version"]
-        print(f"Using production model: {selected_model_version}")
+        print(f"[A/B Test] Using production model: {selected_model_version}")
     else:
-        print(f"Using default base model: {selected_model_version}")
+        print(f"[A/B Test] Using default base model: {selected_model_version}")
 
     # V1 경량화 원칙에 따라, LLM에 전달할 간결한 프롬프트를 생성합니다.
     prompt = f"""[SYSTEM]
