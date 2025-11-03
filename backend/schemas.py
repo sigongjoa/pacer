@@ -42,6 +42,7 @@ class LLMLogResponse(BaseModel):
     log_id: int
     submission_id: str
     concept_name: Optional[str] = None
+    model_version: Optional[str] = None
     decision: str
     reason: Optional[str]
     coach_feedback: Optional[str]

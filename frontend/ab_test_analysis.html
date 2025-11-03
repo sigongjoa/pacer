@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>A/B Test Analysis</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+    <div class="container mt-5">
+        <h1>A/B Test Analysis</h1>
+        <p>Compare coach feedback rates across different LLM model versions.</p>
+        
+        <div class="card">
+            <div class="card-header">Feedback Summary by Model Version</div>
+            <div class="card-body">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Model Version</th>
+                            <th>Feedback Type</th>
+                            <th>Count</th>
+                        </tr>
+                    </thead>
+                    <tbody id="ab-test-summary-table-body">
+                        <!-- A/B test summary data will be inserted here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script src="ab_test_analysis.js"></script>
+</body>
+</html>

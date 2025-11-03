@@ -29,7 +29,8 @@ class LLMLog(Base):
     log_id = Column(Integer, primary_key=True, index=True)
     submission_id = Column(String, nullable=False)
     coach_id = Column(String, nullable=True)
-    concept_name = Column(String, nullable=True) # Add this line
+    concept_name = Column(String, nullable=True)
+    model_version = Column(String, nullable=True) # Add this line
     decision = Column(String, nullable=False)
     reason = Column(Text, nullable=True)
     coach_feedback = Column(String, nullable=True)

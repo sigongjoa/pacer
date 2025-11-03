@@ -4,7 +4,7 @@ from sqlalchemy import func, and_
 from sqlalchemy.orm import selectinload
 from sqlalchemy.future import select
 from datetime import date, timedelta, datetime
-from typing import List, Optional # Optional 추가
+from typing import List, Optional, Dict, Any # Optional, Dict, Any 추가
 
 import models
 import schemas
@@ -36,8 +36,8 @@ async def get_llm_logs(
     result = await db.execute(query)
     return result.scalars().all()
 
-async def create_llm_log(db: AsyncSession, submission_id: int, decision: str, reason: str, concept_name: str) -> models.LLMLog:
-    db_log = models.LLMLog(submission_id=submission_id, decision=decision, reason=reason, concept_name=concept_name)
+async def create_llm_log(db: AsyncSession, submission_id: int, decision: str, reason: str, concept_name: str, model_version: str) -> models.LLMLog:
+    db_log = models.LLMLog(submission_id=submission_id, decision=decision, reason=reason, concept_name=concept_name, model_version=model_version)
     db.add(db_log)
     await db.flush()
     await db.refresh(db_log)
@@ -204,6 +204,27 @@ async def get_bad_feedback_summary(db: AsyncSession) -> dict:
 
     # Process the summary into a more structured format if needed
     # For now, returning as a list of tuples/namedtuples
+    return [dict(row) for row in summary]
+
+async def get_feedback_summary_by_model_version(db: AsyncSession) -> List[Dict[str, Any]]:
+    """
+    Analyzes LLM logs with coach feedback and returns a summary grouped by 
+    model_version and coach_feedback.
+    """
+    query = (
+        select(
+            models.LLMLog.model_version,
+            models.LLMLog.coach_feedback,
+            func.count(models.LLMLog.log_id).label('count')
+        )
+        .where(models.LLMLog.coach_feedback.isnot(None))
+        .group_by(models.LLMLog.model_version, models.LLMLog.coach_feedback)
+        .order_by(models.LLMLog.model_version, models.LLMLog.coach_feedback)
+    )
+
+    result = await db.execute(query)
+    summary = result.all()
+
     return [dict(row) for row in summary]
 
 def json_serial(obj):
