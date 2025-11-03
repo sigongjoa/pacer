@@ -40,7 +40,7 @@ class FeedbackResponse(BaseModel):
 
 class LLMLogResponse(BaseModel):
     log_id: int
-    submission_id: int
+    submission_id: str
     decision: str
     reason: Optional[str]
     coach_feedback: Optional[str]
@@ -168,3 +168,7 @@ class WeeklyReportResponse(BaseModel):
 
 class WeeklyReportFinalize(BaseModel):
     coach_comment: str
+
+class LLMLogFilterParams(BaseModel):
+    start_date: Optional[date] = None
+    end_date: Optional[date] = None

@@ -1,7 +1,8 @@
 import httpx
 import json
-from typing import List
-from fastapi import APIRouter, HTTPException, Depends
+from datetime import date, timedelta
+from typing import List, Optional
+from fastapi import APIRouter, HTTPException, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 import crud
@@ -41,9 +42,21 @@ async def call_ollama_api(prompt: str) -> dict:
     except json.JSONDecodeError:
         raise HTTPException(status_code=500, detail="Failed to parse LLM response as JSON.")
 
-@router.get("/logs", response_model=List[schemas.LLMLogResponse]) # 프론트엔드를 위한 새 스키마 필요
-async def get_logs(skip: int = 0, limit: int = 20, db: AsyncSession = Depends(get_db)):
-    logs = await crud.get_llm_logs(db, skip=skip, limit=limit)
+@router.get("/logs", response_model=List[schemas.LLMLogResponse])
+async def get_logs(
+    skip: int = 0,
+    limit: int = 20,
+    start_date: Optional[date] = Query(None, description="Filter logs from this date (inclusive). Defaults to 7 days ago."),
+    end_date: Optional[date] = Query(None, description="Filter logs up to this date (inclusive). Defaults to today."),
+    db: AsyncSession = Depends(get_db)
+):
+    # 기본값 설정 (7일 전부터 오늘까지)
+    if end_date is None:
+        end_date = date.today()
+    if start_date is None:
+        start_date = end_date - timedelta(days=6) # 7일간의 데이터를 포함하도록 6일 전으로 설정
+
+    logs = await crud.get_llm_logs(db, skip=skip, limit=limit, start_date=start_date, end_date=end_date)
     return logs
 
 @router.post("/judge", response_model=schemas.JudgeResponse)

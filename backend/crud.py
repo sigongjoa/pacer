@@ -1,15 +1,34 @@
+import json
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import func
+from sqlalchemy import func, and_
 from sqlalchemy.future import select
-from datetime import date, timedelta
+from datetime import date, timedelta, datetime
 from typing import List, Optional # Optional 추가
 
 import models
 import schemas
 import anki_engine
 
-async def get_llm_logs(db: AsyncSession, skip: int = 0, limit: int = 10):
-    result = await db.execute(select(models.LLMLog).order_by(models.LLMLog.created_at.desc()).offset(skip).limit(limit))
+async def get_llm_logs(
+    db: AsyncSession,
+    skip: int = 0,
+    limit: int = 20,
+    start_date: Optional[date] = None,
+    end_date: Optional[date] = None
+) -> List[models.LLMLog]:
+    query = select(models.LLMLog).offset(skip).limit(limit).order_by(models.LLMLog.created_at.desc())
+
+    conditions = []
+    if start_date:
+        conditions.append(models.LLMLog.created_at >= start_date)
+    if end_date:
+        # end_date는 해당 날짜의 자정까지 포함해야 하므로, 다음 날의 자정 직전으로 설정
+        conditions.append(models.LLMLog.created_at < (end_date + timedelta(days=1)))
+
+    if conditions:
+        query = query.where(and_(*conditions))
+
+    result = await db.execute(query)
     return result.scalars().all()
 
 async def create_llm_log(db: AsyncSession, submission_id: int, decision: str, reason: str) -> models.LLMLog:
@@ -119,11 +138,18 @@ async def get_coach_memos(db: AsyncSession, student_id: str, coach_id: Optional[
     result = await db.execute(query)
     return result.scalars().all()
 
+def json_serial(obj):
+    """JSON serializer for objects not serializable by default json code"""
+    if isinstance(obj, (datetime, date)):
+        return obj.isoformat()
+    raise TypeError ("Type %s not serializable" % type(obj))
+
 async def create_weekly_report(db: AsyncSession, report_data: schemas.WeeklyReportResponse) -> models.WeeklyReport:
     # Convert Pydantic models to dictionaries for JSON serialization
-    anki_summaries = [s.model_dump() for s in report_data.anki_card_summaries]
-    llm_summaries = [s.model_dump() for s in report_data.llm_log_summaries]
-    coach_summaries = [s.model_dump() for s in report_data.coach_memo_summaries]
+    # and handle datetime objects
+    anki_summaries = json.loads(json.dumps([s.model_dump() for s in report_data.anki_card_summaries], default=json_serial))
+    llm_summaries = json.loads(json.dumps([s.model_dump() for s in report_data.llm_log_summaries], default=json_serial))
+    coach_summaries = json.loads(json.dumps([s.model_dump() for s in report_data.coach_memo_summaries], default=json_serial))
 
     db_report = models.WeeklyReport(
         student_id=report_data.student_id,

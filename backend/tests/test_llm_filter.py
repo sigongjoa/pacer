@@ -59,3 +59,41 @@ async def test_judge_and_feedback_e2e(client_with_db: TestClient, async_session:
     await async_session.refresh(log_in_db)
     assert log_in_db.coach_feedback == "BAD"
     assert log_in_db.reason_code == "WRONG_JUDGEMENT"
+
+@pytest.mark.asyncio
+async def test_get_llm_logs_with_date_filter(client_with_db: TestClient, async_session: AsyncSession):
+    from datetime import datetime, date, timedelta
+    # 테스트 데이터 생성
+    today = date.today()
+    yesterday = today - timedelta(days=1)
+    two_days_ago = today - timedelta(days=2)
+    eight_days_ago = today - timedelta(days=8)
+
+    log1 = models.LLMLog(submission_id="sub-date-1", decision="APPROVE", reason="reason1", created_at=datetime.combine(today, datetime.min.time()))
+    log2 = models.LLMLog(submission_id="sub-date-2", decision="REJECT", reason="reason2", created_at=datetime.combine(yesterday, datetime.min.time()))
+    log3 = models.LLMLog(submission_id="sub-date-3", decision="APPROVE", reason="reason3", created_at=datetime.combine(two_days_ago, datetime.min.time()))
+    log4 = models.LLMLog(submission_id="sub-date-4", decision="APPROVE", reason="reason4", created_at=datetime.combine(eight_days_ago, datetime.min.time()))
+
+    async_session.add_all([log1, log2, log3, log4])
+    # await async_session.commit() # Transaction is managed by the fixture
+
+    # 오늘 날짜로 필터링 (기본값: 7일 전 ~ 오늘)
+    response = client_with_db.get("/api/v1/filter/logs")
+    assert response.status_code == 200
+    logs = response.json()
+    assert len(logs) == 3 # log1, log2, log3 (8일 전 로그는 제외)
+    assert logs[0]["submission_id"] == "sub-date-1" # 최신순 정렬
+
+    # 특정 기간으로 필터링 (예: 2일 전 ~ 오늘)
+    response = client_with_db.get(f"/api/v1/filter/logs?start_date={two_days_ago.isoformat()}&end_date={today.isoformat()}")
+    assert response.status_code == 200
+    logs = response.json()
+    assert len(logs) == 3 # log1, log2, log3
+    assert logs[0]["submission_id"] == "sub-date-1"
+
+    # 특정 기간으로 필터링 (예: 8일 전 ~ 8일 전)
+    response = client_with_db.get(f"/api/v1/filter/logs?start_date={eight_days_ago.isoformat()}&end_date={eight_days_ago.isoformat()}")
+    assert response.status_code == 200
+    logs = response.json()
+    assert len(logs) == 1
+    assert logs[0]["submission_id"] == "sub-date-4"
